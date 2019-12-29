@@ -35,6 +35,8 @@ namespace PhotoFiler
         // [File] File Name - 20191130_192659_IMG_5030.JPG
         // [File] File Size - 8434775 bytes
 
+        public static bool fVerbose = false;
+
         public string filePath { get; set; }
 
         // Attributes
@@ -48,10 +50,7 @@ namespace PhotoFiler
         public string lensModel { get; set; }
         public System.DateTime? datetimeOriginal { get; set; }
         public string datetimeOriginalString { get; set; }
-        public string imageFilename { get; set; }
-        public long imageFilesize { get; set; }
-        public System.DateTime imageFiletime { get; set; }
-        public string imageFiletimeString { get; set; }
+        public bool hasValidExifTimestamp { get; set; }
         
 
         public ExifData(string filename)
@@ -88,19 +87,22 @@ namespace PhotoFiler
             imageHeight = this.GetImageHeight(directories);
             imageWidth = this.GetImageWidth(directories);
             datetimeOriginal = this.GetTakenDateTime(directories);
-            System.DateTime timestamp = (datetimeOriginal != null) ? (System.DateTime)datetimeOriginal: imageFiletime;
-            datetimeOriginalString = timestamp.ToString("yyyyMMdd'_'HHmmss");
+            if (datetimeOriginal != null)
+            {
+                hasValidExifTimestamp = true;
+                datetimeOriginalString = ((DateTime)datetimeOriginal).ToString("yyyyMMdd'_'HHmmss");
+            }
+            else
+            { 
+                hasValidExifTimestamp = false;
+                datetimeOriginalString = "";
+            }
 
             cameraMake = this.GetCameraMake(directories);
             cameraModel = this.GetCameraModel(directories);
 
             //lensMake = this.GetLensMake(directories);
             //lensModel = this.GetLensModel(directories);
-
-            imageFilename = filePath;
-            imageFilesize = GetFilesize(filePath);
-            imageFiletime = GetFiletime(filePath);
-            imageFiletimeString = imageFiletime.ToString("yyyyMMdd'_'HHmmss");
         }
 
         int GetImageWidth(IEnumerable<MetadataExtractor.Directory> directories)
@@ -223,22 +225,6 @@ namespace PhotoFiler
             if (descriptor == null) return null;
             // Get tag description
             return descriptor.GetExposureProgramDescription();
-        }
-
-        long GetFilesize(string filePath)
-        {
-            System.IO.FileInfo f = new System.IO.FileInfo(filePath);
-            if (f == null) return -1;
-            long temp = f.Length;
-            return temp;
-        }
-
-        System.DateTime GetFiletime(string filePath)
-        {
-            System.IO.FileInfo f = new System.IO.FileInfo(filePath);
-            if (f == null) return System.DateTime.Now;
-            System.DateTime temp = f.CreationTime;
-            return temp;
         }
 
         void PrintListOfDirectories(IEnumerable<MetadataExtractor.Directory> directories)
