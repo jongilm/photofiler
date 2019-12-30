@@ -30,7 +30,7 @@ namespace PhotoFiler
         
         // Actions
         public static bool fFixFilenamePrefixes = false;
-        public static bool fFixFiletimes = false;
+        public static bool fSetFiletimesFromExifTimes = false;
         public static bool fForceUnderscores = false;
         public static bool fForceSpacesAndHyphens = false;
         public static bool fFileByDate = false;
@@ -72,7 +72,7 @@ namespace PhotoFiler
                             case "--incorrectfilenameprefixvsfiletime": fIncorrectFilenamePrefixVsFiletimeOnly = true; break;
 
                             case "--fixfilenameprefixes": fFixFilenamePrefixes = true; break;
-                            case "--fixfiletimes": fFixFiletimes = true; break;
+                            case "--setfiletimesfromexiftimes": fSetFiletimesFromExifTimes = true; break;
                             case "--forceunderscores": fForceUnderscores = true; break;
                             case "--forcespacesandhyphens": fForceSpacesAndHyphens = true; break;
                             case "--filebydate": fFileByDate = true; break;
@@ -110,13 +110,13 @@ namespace PhotoFiler
                     Console.WriteLine("   --IncorrectFiletimeVsExifTime       : Process only images that have a file timestamp that does not match Exif date taken");
                     Console.WriteLine("   --IncorrectFilenamePrefixVsExifTime : Process only images that have a filename prefix that does not match Exif date taken");
                     Console.WriteLine("   --IncorrectFilenamePrefixVsFiletime : Process only images that have a filename prefix that does not match the FS file timestamp");
-                    //Console.WriteLine("Actions:");
+                    Console.WriteLine("Actions:");
                     //Console.WriteLine("   --FixFilenamePrefixes      : Add/Fix Filename timestamp prefixes");
-                    //Console.WriteLine("   --FixFiletimes             : FixFiletimes");
+                    Console.WriteLine("   --SetFiletimesFromExifTimes: Set File timestamps from Exif timestamps");
                     //Console.WriteLine("   --ForceUnderscores         : ForceUnderscores");
                     //Console.WriteLine("   --ForceSpacesAndHyphens    : ForceSpacesAndHyphens");
                     //Console.WriteLine("   --FileByDate               : FileByDate");
-                    //Console.WriteLine("   --FixAll                   : FixFilenamePrefixes, FixFiletimes, ForceUnderscores");
+                    //Console.WriteLine("   --FixAll                   : FixFilenamePrefixes, fSetFiletimesFromExifTimes, ForceUnderscores");
                     return 0;
                 }
                 if (fTesting)
@@ -227,7 +227,7 @@ namespace PhotoFiler
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fIncorrectFiletimeVsExifTimeOnly && isFiletimeCorrect(exif1.datetimeOriginal, fnp1.imageFiletime ))
+            if (fIncorrectFiletimeVsExifTimeOnly && isFiletimeCorrect(exif1, fnp1))
             {
                 numberOfFilesFiltered++;
                 return;
@@ -242,7 +242,7 @@ namespace PhotoFiler
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fCorrectFiletimeVsExifTimeOnly && !isFiletimeCorrect(exif1.datetimeOriginal, fnp1.imageFiletime ))
+            if (fCorrectFiletimeVsExifTimeOnly && !isFiletimeCorrect(exif1, fnp1))
             {
                 numberOfFilesFiltered++;
                 return;
@@ -285,7 +285,21 @@ namespace PhotoFiler
                                     "Fn:" + fnp1.fullyQualifiedFilename );
             }
             //fFixFilenamePrefixes
-            //fFixFiletimes
+            if ( fSetFiletimesFromExifTimes &&
+                 exif1.hasValidExifTimestamp &&
+                 isFiletimeCorrect(exif1, fnp1) == false &&
+                 File.Exists(fnp1.fullyQualifiedFilename) ) 
+            {
+                if (fDummyRun)
+                {
+                    Console.WriteLine($"DUMMY: SetLastWriteTime({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) (was {fnp1.imageFiletimeString})");
+                }
+                else
+                { 
+                    Console.WriteLine($"ACTION: SetLastWriteTime({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) (was {fnp1.imageFiletimeString})");
+                    File.SetLastWriteTime(fnp1.fullyQualifiedFilename, (DateTime)exif1.datetimeOriginal);
+                }
+            }
             //fForceUnderscores
             //fForceSpacesAndHyphens
             //fFileByDate
@@ -355,7 +369,7 @@ namespace PhotoFiler
             return Math.Abs(delta) < windowInSeconds;
         }
 
-        public static bool isFiletimeCorrect(DateTime? exiftime, DateTime? filetime )
+        public static bool isFiletimeCorrect(ExifData exif1, FilenamePrefix fnp1)
         {
             int window = 10;
             DateTime temp1;
@@ -364,20 +378,21 @@ namespace PhotoFiler
             //if (exiftime==null) return true;
 
             // If we don't have an exif datetime, then we have no way of knowing that the filetime is correct.
-            if (exiftime==null) return false;
+            if (exif1.hasValidExifTimestamp==false) return false;
+            if (exif1.datetimeOriginal==null) return false;
 
             // If the filetime is null, then we have bigger problems
-            if (filetime==null) return false;
+            if (fnp1.imageFiletime==null) return false;
 
-            if (RoughlyEquals((DateTime)exiftime, (DateTime)filetime, window)) return true;
+            if (RoughlyEquals((DateTime)exif1.datetimeOriginal, (DateTime)fnp1.imageFiletime, window)) return true;
 
-            temp1 = (DateTime)filetime;
+            temp1 = (DateTime)fnp1.imageFiletime;
             temp1 = temp1.AddHours(1);
-            if (RoughlyEquals((DateTime)exiftime, temp1, window)) return true;
+            if (RoughlyEquals((DateTime)exif1.datetimeOriginal, temp1, window)) return true;
 
-            temp1 = (DateTime)filetime;
+            temp1 = (DateTime)fnp1.imageFiletime;
             temp1 = temp1.AddHours(-1);
-            if (RoughlyEquals((DateTime)exiftime, temp1, window)) return true;
+            if (RoughlyEquals((DateTime)exif1.datetimeOriginal, temp1, window)) return true;
 
             return false;
         }
