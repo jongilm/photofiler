@@ -90,13 +90,13 @@ namespace PhotoFiler
             catch (FormatException ex) // String was not recognized as a valid DateTime.
             {
                 if (fVerbose)
-                    Console.WriteLine($"Format Exception Handler: {ex}");
+                    Console.WriteLine($"ERROR: FilenamePrefixToDateTime: {ex}");
                 return false;
             }
             catch (Exception ex) 
             {
                 if (fVerbose)
-                    Console.WriteLine($"Generic Exception Handler: {ex}");
+                    Console.WriteLine($"ERROR: FilenamePrefixToDateTime: {ex}");
                 return false;
             }
             return true;

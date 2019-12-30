@@ -14,26 +14,26 @@ namespace PhotoFiler
         public static bool fRecursive = false;
         public static bool fDummyRun = false;
         // Filters
-        public static bool fBrandedCamerasOnly = false;
-        public static bool fUnbrandedCamerasOnly = false;
-        public static bool fKnownCamerasOnly = false;
-        public static bool fUnknownCamerasOnly = false;
-        public static bool fDimensionsFullsizeOnly = false;
-        public static bool fDimensionsNotFullsizeOnly = false;
+        public static bool fShowOnlyBrandedCameras = false;
+        public static bool fShowOnlyUnbrandedCameras = false;
+        public static bool fShowOnlyKnownCameras = false;
+        public static bool fShowOnlyUnknownCameras = false;
+        public static bool fShowOnlyDimensionsFullsize = false;
+        public static bool fShowOnlyDimensionsNotFullsize = false;
 
-        public static bool fIncorrectFiletimeVsExifTimeOnly = false;
-        public static bool fIncorrectFilenamePrefixVsExifTimeOnly = false;
-        public static bool fIncorrectFilenamePrefixVsFiletimeOnly = false;
-        public static bool fCorrectFiletimeVsExifTimeOnly = false;
-        public static bool fCorrectFilenamePrefixVsExifTimeOnly = false;
-        public static bool fCorrectFilenamePrefixVsFiletimeOnly = false;
+        public static bool fShowOnlyIncorrectFiletimeVsExifTime = false;
+        public static bool fShowOnlyIncorrectFilenamePrefixVsExifTime = false;
+        public static bool fShowOnlyIncorrectFilenamePrefixVsFiletime = false;
+        public static bool fShowOnlyCorrectFiletimeVsExifTime = false;
+        public static bool fShowOnlyCorrectFilenamePrefixVsExifTime = false;
+        public static bool fShowOnlyCorrectFilenamePrefixVsFiletime = false;
         
         // Actions
-        public static bool fFixFilenamePrefixes = false;
-        public static bool fSetFiletimesFromExifTimes = false;
-        public static bool fForceUnderscores = false;
-        public static bool fForceSpacesAndHyphens = false;
-        public static bool fFileByDate = false;
+        public static bool fActionFixFilenamePrefixes = false;
+        public static bool fActionSetFiletimesFromExifTimes = false;
+        public static bool fActionForceUnderscores = false;
+        public static bool fActionForceSpacesAndHyphens = false;
+        public static bool fActionFileByDate = false;
         // Counters
         public static int numberOfFilesProcessed = 0;
         public static int numberOfFilesShown = 0;
@@ -58,24 +58,25 @@ namespace PhotoFiler
                             case "-v": fVerbose = true; ExifData.fVerbose = true; FilenamePrefix.fVerbose = true; break;
                             case "-r": fRecursive = true; break;
                             case "-d": fDummyRun = true; break;
-                            case "--branded": fBrandedCamerasOnly = true; break;
-                            case "--unbranded": fUnbrandedCamerasOnly = true; break;
-                            case "--known": fKnownCamerasOnly = true; break;
-                            case "--unknown": fUnknownCamerasOnly = true; break;
-                            case "--fullsize": fDimensionsFullsizeOnly = true; break;
-                            case "--notfullsize": fDimensionsNotFullsizeOnly = true; break;
-                            case "--correctfiletimevsexiftime": fCorrectFiletimeVsExifTimeOnly = true; break;
-                            case "--correctfilenameprefixvsexiftime": fCorrectFilenamePrefixVsExifTimeOnly = true; break;
-                            case "--correctfilenameprefixvsfiletime": fCorrectFilenamePrefixVsFiletimeOnly = true; break;
-                            case "--incorrectfiletimevsexiftime": fIncorrectFiletimeVsExifTimeOnly = true; break;
-                            case "--incorrectfilenameprefixvsexiftime": fIncorrectFilenamePrefixVsExifTimeOnly = true; break;
-                            case "--incorrectfilenameprefixvsfiletime": fIncorrectFilenamePrefixVsFiletimeOnly = true; break;
 
-                            case "--fixfilenameprefixes": fFixFilenamePrefixes = true; break;
-                            case "--setfiletimesfromexiftimes": fSetFiletimesFromExifTimes = true; break;
-                            case "--forceunderscores": fForceUnderscores = true; break;
-                            case "--forcespacesandhyphens": fForceSpacesAndHyphens = true; break;
-                            case "--filebydate": fFileByDate = true; break;
+                            case "--showbranded": fShowOnlyBrandedCameras = true; break;
+                            case "--showunbranded": fShowOnlyUnbrandedCameras = true; break;
+                            case "--showknown": fShowOnlyKnownCameras = true; break;
+                            case "--showunknown": fShowOnlyUnknownCameras = true; break;
+                            case "--showfullsize": fShowOnlyDimensionsFullsize = true; break;
+                            case "--shownotfullsize": fShowOnlyDimensionsNotFullsize = true; break;
+                            case "--showcorrectfiletimevsexiftime": fShowOnlyCorrectFiletimeVsExifTime = true; break;
+                            case "--showcorrectfilenameprefixvsexiftime": fShowOnlyCorrectFilenamePrefixVsExifTime = true; break;
+                            case "--showcorrectfilenameprefixvsfiletime": fShowOnlyCorrectFilenamePrefixVsFiletime = true; break;
+                            case "--showincorrectfiletimevsexiftime": fShowOnlyIncorrectFiletimeVsExifTime = true; break;
+                            case "--showincorrectfilenameprefixvsexiftime": fShowOnlyIncorrectFilenamePrefixVsExifTime = true; break;
+                            case "--showincorrectfilenameprefixvsfiletime": fShowOnlyIncorrectFilenamePrefixVsFiletime = true; break;
+
+                            case "--fixfilenameprefixes": fActionFixFilenamePrefixes = true; break;
+                            case "--setfiletimesfromexiftimes": fActionSetFiletimesFromExifTimes = true; break;
+                            case "--forceunderscores": fActionForceUnderscores = true; break;
+                            case "--forcespacesandhyphens": fActionForceSpacesAndHyphens = true; break;
+                            case "--filebydate": fActionFileByDate = true; break;
                             default: Console.WriteLine($"Unrecognised option: {args[ii]}"); return -1;
                         }
                     }
@@ -97,19 +98,19 @@ namespace PhotoFiler
                     Console.WriteLine("   -r                         : Recursive");
                     Console.WriteLine("   -d                         : Dummy Run");
                     Console.WriteLine("Filters:");
-                    Console.WriteLine("   --Branded                           : Process only images that have Camera Make and Model in the EXIF metadata");
-                    Console.WriteLine("   --Unbranded                         : Process only images that DO NOT have Camera Make and Model in the EXIF metadata");
-                    Console.WriteLine("   --Known                             : Process all images taken with one of MY Cameras");
-                    Console.WriteLine("   --Unknown                           : Process all images except those taken with one MY Cameras");
-                    Console.WriteLine("   --Fullsize                          : Process only images that appear to have their original dimensions");
-                    Console.WriteLine("   --NotFullsize                       : Process only images that appear to have been cropped or resized");
+                    Console.WriteLine("   --ShowBranded                           : Process only images that have Camera Make and Model in the EXIF metadata");
+                    Console.WriteLine("   --ShowUnbranded                         : Process only images that DO NOT have Camera Make and Model in the EXIF metadata");
+                    Console.WriteLine("   --ShowKnown                             : Process all images taken with one of MY Cameras");
+                    Console.WriteLine("   --ShowUnknown                           : Process all images except those taken with one MY Cameras");
+                    Console.WriteLine("   --ShowFullsize                          : Process only images that appear to have their original dimensions");
+                    Console.WriteLine("   --ShowNotFullsize                       : Process only images that appear to have been cropped or resized");
                     Console.WriteLine("DateTime Filters:");
-                    Console.WriteLine("   --CorrectFiletimeVsExifTime         : Process only images that have a file timestamp that matches Exif date taken");
-                    Console.WriteLine("   --CorrectFilenamePrefixVsExifTime   : Process only images that have a filename prefix that matches Exif date taken");
-                    Console.WriteLine("   --CorrectFilenamePrefixVsFiletime   : Process only images that have a filename prefix that matches the FS file timestamp");
-                    Console.WriteLine("   --IncorrectFiletimeVsExifTime       : Process only images that have a file timestamp that does not match Exif date taken");
-                    Console.WriteLine("   --IncorrectFilenamePrefixVsExifTime : Process only images that have a filename prefix that does not match Exif date taken");
-                    Console.WriteLine("   --IncorrectFilenamePrefixVsFiletime : Process only images that have a filename prefix that does not match the FS file timestamp");
+                    Console.WriteLine("   --ShowCorrectFiletimeVsExifTime         : Process only images that have a file timestamp that matches Exif date taken");
+                    Console.WriteLine("   --ShowCorrectFilenamePrefixVsExifTime   : Process only images that have a filename prefix that matches Exif date taken");
+                    Console.WriteLine("   --ShowCorrectFilenamePrefixVsFiletime   : Process only images that have a filename prefix that matches the FS file timestamp");
+                    Console.WriteLine("   --ShowIncorrectFiletimeVsExifTime       : Process only images that have a file timestamp that does not match Exif date taken");
+                    Console.WriteLine("   --ShowIncorrectFilenamePrefixVsExifTime : Process only images that have a filename prefix that does not match Exif date taken");
+                    Console.WriteLine("   --ShowIncorrectFilenamePrefixVsFiletime : Process only images that have a filename prefix that does not match the FS file timestamp");
                     Console.WriteLine("Actions:");
                     //Console.WriteLine("   --FixFilenamePrefixes      : Add/Fix Filename timestamp prefixes");
                     Console.WriteLine("   --SetFiletimesFromExifTimes: Set File timestamps from Exif timestamps");
@@ -185,74 +186,101 @@ namespace PhotoFiler
 
         public static void ProcessImage( string filePath )
         {
-            if (filePath.EndsWith(".jpg",StringComparison.OrdinalIgnoreCase) == false)
+            try
+            { 
+                if (filePath.EndsWith(".jpg",StringComparison.OrdinalIgnoreCase) == false)
+                    return;
+            }
+            catch (System.UnauthorizedAccessException ex)
+            {
+                if (fVerbose)
+                    Console.WriteLine($"ERROR: ProcessImage: {ex}");
+                Console.WriteLine("ERROR: UnauthorizedAccessException [" + filePath + "]. Skipping.");
                 return;
-
+            }
             if (fVerbose)
                 Console.WriteLine("Processing: [" + filePath + "] ...");
+
+            if (filePath.Length >= 260)
+            {
+                Console.WriteLine("ERROR: File path too long [" + filePath + "]. Skipping.");
+                return;
+            }
 
             PhotoFiler.ExifData exif1 = new ExifData(filePath);
             PhotoFiler.FilenamePrefix fnp1 = new FilenamePrefix(filePath);
 
             long pixels = (exif1.imageHeight * exif1.imageWidth);
 
+            // Testing
+            //if (fnp1.imageFilename == "SCN_0004_photo_used_at_Andre_and_Debbies_25th_Anniv.jpg.jpg" ||
+            //    fnp1.imageFilename == "DCP03364.jpg")
+            //{
+            //    Console.WriteLine($"DEBUGGING: isFiletimeCorrect() - Inconsistent metadata");
+            //}
+
             numberOfFilesProcessed++;
-            if (fBrandedCamerasOnly && (exif1.cameraMake == "" || exif1.cameraModel == ""))
+            if (fShowOnlyBrandedCameras && (exif1.cameraMake == "" || exif1.cameraModel == ""))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fUnbrandedCamerasOnly && (exif1.cameraMake != "" || exif1.cameraModel != ""))
+            if (fShowOnlyUnbrandedCameras && (exif1.cameraMake != "" || exif1.cameraModel != ""))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fKnownCamerasOnly && !isKnownCamera(exif1.cameraMake, exif1.cameraModel))
+            if (fShowOnlyKnownCameras && !isKnownCamera(exif1.cameraMake, exif1.cameraModel))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fUnknownCamerasOnly && isKnownCamera(exif1.cameraMake, exif1.cameraModel))
+            if (fShowOnlyUnknownCameras && isKnownCamera(exif1.cameraMake, exif1.cameraModel))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fDimensionsFullsizeOnly && !isFullSizeImage(exif1.cameraMake, exif1.cameraModel, pixels))
+            if (fShowOnlyDimensionsFullsize && !isFullSizeImage(exif1.cameraMake, exif1.cameraModel, pixels))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fDimensionsNotFullsizeOnly && isFullSizeImage(exif1.cameraMake, exif1.cameraModel, pixels))
+            if (fShowOnlyDimensionsNotFullsize && isFullSizeImage(exif1.cameraMake, exif1.cameraModel, pixels))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fIncorrectFiletimeVsExifTimeOnly && isFiletimeCorrect(exif1, fnp1))
+            if (fShowOnlyIncorrectFiletimeVsExifTime && (!exif1.hasValidExifTimestamp || isFiletimeCorrect(exif1, fnp1)))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fIncorrectFilenamePrefixVsExifTimeOnly && isFilenamePrefixCorrect(exif1.datetimeOriginal, fnp1 ))
+            //if (fIncorrectFiletimeVsExifTimeOnly && exif1.hasValidExifTimestamp && isFiletimeCorrect(exif1, fnp1))
+            //{
+            //    numberOfFilesFiltered++;
+            //    return;
+            //}
+            if (fShowOnlyIncorrectFilenamePrefixVsExifTime && (!fnp1.hasValidFilenamePrefix || !exif1.hasValidExifTimestamp || isFilenamePrefixCorrect(exif1.datetimeOriginal, fnp1 )) )
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fIncorrectFilenamePrefixVsFiletimeOnly && isFilenamePrefixCorrect(fnp1.imageFiletime, fnp1 ))
+            if (fShowOnlyIncorrectFilenamePrefixVsFiletime && (!fnp1.hasValidFilenamePrefix || isFilenamePrefixCorrect(fnp1.imageFiletime, fnp1 )))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fCorrectFiletimeVsExifTimeOnly && !isFiletimeCorrect(exif1, fnp1))
+            if (fShowOnlyCorrectFiletimeVsExifTime && !(!exif1.hasValidExifTimestamp || isFiletimeCorrect(exif1, fnp1)))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fCorrectFilenamePrefixVsExifTimeOnly && !isFilenamePrefixCorrect(exif1.datetimeOriginal, fnp1 ))
+            if (fShowOnlyCorrectFilenamePrefixVsExifTime && !(!fnp1.hasValidFilenamePrefix || !exif1.hasValidExifTimestamp || isFilenamePrefixCorrect(exif1.datetimeOriginal, fnp1 )))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fCorrectFilenamePrefixVsFiletimeOnly && !isFilenamePrefixCorrect(fnp1.imageFiletime, fnp1 ))
+            if (fShowOnlyCorrectFilenamePrefixVsFiletime && !(!fnp1.hasValidFilenamePrefix || isFilenamePrefixCorrect(fnp1.imageFiletime, fnp1 )))
             {
                 numberOfFilesFiltered++;
                 return;
@@ -285,7 +313,7 @@ namespace PhotoFiler
                                     "Fn:" + fnp1.fullyQualifiedFilename );
             }
             //fFixFilenamePrefixes
-            if ( fSetFiletimesFromExifTimes &&
+            if ( fActionSetFiletimesFromExifTimes &&
                  exif1.hasValidExifTimestamp &&
                  isFiletimeCorrect(exif1, fnp1) == false &&
                  File.Exists(fnp1.fullyQualifiedFilename) ) 
@@ -374,9 +402,6 @@ namespace PhotoFiler
             int window = 10;
             DateTime temp1;
 
-            // If we don't have an exifdatetime, then we have to assume that the filetime is correct.
-            //if (exiftime==null) return true;
-
             // If we don't have an exif datetime, then we have no way of knowing that the filetime is correct.
             if (exif1.hasValidExifTimestamp==false) return false;
             if (exif1.datetimeOriginal==null) return false;
@@ -401,9 +426,6 @@ namespace PhotoFiler
         {
             // If we don't have a timestamp in the filename, then return false
             if (fnp1.hasValidFilenamePrefix==false) return false;
-
-            // If we don't have an exif datetime, then we have to assume that any time in the filename is correct.
-            //if (refDateTime==null) return true;
 
             // If we don't have a refdatetime, then we do not know if any time in the filename is correct.
             if (refDateTime==null) return false;
