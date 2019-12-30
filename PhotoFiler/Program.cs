@@ -27,13 +27,15 @@ namespace PhotoFiler
         public static bool fShowOnlyCorrectFiletimeVsExifTime = false;
         public static bool fShowOnlyCorrectFilenamePrefixVsExifTime = false;
         public static bool fShowOnlyCorrectFilenamePrefixVsFiletime = false;
-        
+        public static bool fShowMalformedFilenamePrefix = false;
+        public static bool fShowMissingFilenamePrefix = false;
         // Actions
-        public static bool fActionFixFilenamePrefixes = false;
-        public static bool fActionSetFiletimesFromExifTimes = false;
-        public static bool fActionForceUnderscores = false;
-        public static bool fActionForceSpacesAndHyphens = false;
-        public static bool fActionFileByDate = false;
+        public static bool fActionSetFiletimeFromExifTime = false;
+        //public static bool fActionFixMalformedFilenamePrefix = false;
+        public static bool fActionAddMissingFilenamePrefix = false;
+        //public static bool fActionForceUnderscores = false;
+        //public static bool fActionForceSpacesAndHyphens = false;
+        //public static bool fActionFileByDate = false;
         // Counters
         public static int numberOfFilesProcessed = 0;
         public static int numberOfFilesShown = 0;
@@ -71,12 +73,15 @@ namespace PhotoFiler
                             case "--showincorrectfiletimevsexiftime": fShowOnlyIncorrectFiletimeVsExifTime = true; break;
                             case "--showincorrectfilenameprefixvsexiftime": fShowOnlyIncorrectFilenamePrefixVsExifTime = true; break;
                             case "--showincorrectfilenameprefixvsfiletime": fShowOnlyIncorrectFilenamePrefixVsFiletime = true; break;
+                            case "--showmalformedfilenameprefix": fShowMalformedFilenamePrefix = true; break;
+                            case "--showmissingfilenameprefix": fShowMissingFilenamePrefix = true; break;
 
-                            case "--fixfilenameprefixes": fActionFixFilenamePrefixes = true; break;
-                            case "--setfiletimesfromexiftimes": fActionSetFiletimesFromExifTimes = true; break;
-                            case "--forceunderscores": fActionForceUnderscores = true; break;
-                            case "--forcespacesandhyphens": fActionForceSpacesAndHyphens = true; break;
-                            case "--filebydate": fActionFileByDate = true; break;
+                            case "--setfiletimesfromexiftimes": fActionSetFiletimeFromExifTime = true; break;
+                            //case "--fixmalformedfilenameprefixes": fActionFixMalformedFilenamePrefix = true; break;
+                            case "--addmissingfilenameprefix": fActionAddMissingFilenamePrefix = true; break;
+                            //case "--forceunderscores": fActionForceUnderscores = true; break;
+                            //case "--forcespacesandhyphens": fActionForceSpacesAndHyphens = true; break;
+                            //case "--filebydate": fActionFileByDate = true; break;
                             default: Console.WriteLine($"Unrecognised option: {args[ii]}"); return -1;
                         }
                     }
@@ -111,13 +116,16 @@ namespace PhotoFiler
                     Console.WriteLine("   --ShowIncorrectFiletimeVsExifTime       : Process only images that have a file timestamp that does not match Exif date taken");
                     Console.WriteLine("   --ShowIncorrectFilenamePrefixVsExifTime : Process only images that have a filename prefix that does not match Exif date taken");
                     Console.WriteLine("   --ShowIncorrectFilenamePrefixVsFiletime : Process only images that have a filename prefix that does not match the FS file timestamp");
+                    Console.WriteLine("   --ShowMalformedFilenamePrefix           : Process only images that have a filename prefix that is formatted differently to YYYYMMDD_HHMMSS");
+                    Console.WriteLine("   --ShowMissingFilenamePrefix             : Process only images that have a no filename prefix, including any malformed prefix");
                     Console.WriteLine("Actions:");
-                    //Console.WriteLine("   --FixFilenamePrefixes      : Add/Fix Filename timestamp prefixes");
-                    Console.WriteLine("   --SetFiletimesFromExifTimes: Set File timestamps from Exif timestamps");
+                    Console.WriteLine("   --SetFiletimesFromExifTimes             : Set File timestamps from Exif timestamps");
+                    //Console.WriteLine("   --FixMalformedFilenamePrefixes          : Add/Fix Filename timestamp prefixes");
+                    Console.WriteLine("   --AddMissingFilenamePrefix              : Add Filename timestamp prefix if not already present (and not malformed)");
                     //Console.WriteLine("   --ForceUnderscores         : ForceUnderscores");
                     //Console.WriteLine("   --ForceSpacesAndHyphens    : ForceSpacesAndHyphens");
                     //Console.WriteLine("   --FileByDate               : FileByDate");
-                    //Console.WriteLine("   --FixAll                   : FixFilenamePrefixes, fSetFiletimesFromExifTimes, ForceUnderscores");
+                    //Console.WriteLine("   --FixAll                   : fActionAddMissingFilenamePrefix, fSetFiletimesFromExifTimes, fForceUnderscores");
                     return 0;
                 }
                 if (fTesting)
@@ -285,6 +293,16 @@ namespace PhotoFiler
                 numberOfFilesFiltered++;
                 return;
             }
+            if (fShowMalformedFilenamePrefix && !(fnp1.filenameStartsWithYYYY && !fnp1.hasValidFilenamePrefix))
+            {
+                numberOfFilesFiltered++;
+                return;
+            }
+            if (fShowMissingFilenamePrefix && (fnp1.filenameStartsWithYYYY || fnp1.hasValidFilenamePrefix))
+            {
+                numberOfFilesFiltered++;
+                return;
+            }
             numberOfFilesShown++;
 
             if (fVerbose)
@@ -312,8 +330,7 @@ namespace PhotoFiler
                                     "Fn:" + fnp1.imageFilename + "\t" + 
                                     "Fn:" + fnp1.fullyQualifiedFilename );
             }
-            //fFixFilenamePrefixes
-            if ( fActionSetFiletimesFromExifTimes &&
+            if ( fActionSetFiletimeFromExifTime &&
                  exif1.hasValidExifTimestamp &&
                  isFiletimeCorrect(exif1, fnp1) == false &&
                  File.Exists(fnp1.fullyQualifiedFilename) ) 
@@ -326,6 +343,23 @@ namespace PhotoFiler
                 { 
                     Console.WriteLine($"ACTION: SetLastWriteTime({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) (was {fnp1.imageFiletimeString})");
                     File.SetLastWriteTime(fnp1.fullyQualifiedFilename, (DateTime)exif1.datetimeOriginal);
+                }
+            }
+            if (fActionAddMissingFilenamePrefix &&
+                (fnp1.filenameStartsWithYYYY == false) &&
+                (fnp1.hasValidFilenamePrefix == false) &&
+                (exif1.hasValidExifTimestamp == true) &&
+                File.Exists(fnp1.fullyQualifiedFilename) )
+            {
+                string newFilename = FilenamePrefix.ModifyFilenameWithPrefixAndSuffix(fnp1.fullyQualifiedFilename, (exif1.datetimeOriginalString + "_"), null);
+                if (fDummyRun)
+                {
+                    Console.WriteLine($"DUMMY: AddFilenamePrefix({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) ==> {newFilename}");
+                }
+                else
+                { 
+                    Console.WriteLine($"ACTION: AddFilenamePrefix({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) ==> {newFilename}");
+                    System.IO.File.Move(fnp1.fullyQualifiedFilename, newFilename);
                 }
             }
             //fForceUnderscores
