@@ -12,6 +12,7 @@ namespace PhotoFiler
         public static bool fShowUsage = false;
         public static bool fVerbose = false;
         public static bool fRecursive = false;
+        public static bool fDummyRun = false;
         // Filters
         public static bool fBrandedCamerasOnly = false;
         public static bool fUnbrandedCamerasOnly = false;
@@ -28,6 +29,7 @@ namespace PhotoFiler
         public static bool fCorrectFilenamePrefixVsFiletimeOnly = false;
         
         // Actions
+        public static bool fFixFilenamePrefixes = false;
         public static bool fFixFiletimes = false;
         public static bool fForceUnderscores = false;
         public static bool fForceSpacesAndHyphens = false;
@@ -55,6 +57,7 @@ namespace PhotoFiler
                             case "-h": fShowUsage = true; break;
                             case "-v": fVerbose = true; ExifData.fVerbose = true; FilenamePrefix.fVerbose = true; break;
                             case "-r": fRecursive = true; break;
+                            case "-d": fDummyRun = true; break;
                             case "--branded": fBrandedCamerasOnly = true; break;
                             case "--unbranded": fUnbrandedCamerasOnly = true; break;
                             case "--known": fKnownCamerasOnly = true; break;
@@ -67,6 +70,8 @@ namespace PhotoFiler
                             case "--incorrectfiletimevsexiftime": fIncorrectFiletimeVsExifTimeOnly = true; break;
                             case "--incorrectfilenameprefixvsexiftime": fIncorrectFilenamePrefixVsExifTimeOnly = true; break;
                             case "--incorrectfilenameprefixvsfiletime": fIncorrectFilenamePrefixVsFiletimeOnly = true; break;
+
+                            case "--fixfilenameprefixes": fFixFilenamePrefixes = true; break;
                             case "--fixfiletimes": fFixFiletimes = true; break;
                             case "--forceunderscores": fForceUnderscores = true; break;
                             case "--forcespacesandhyphens": fForceSpacesAndHyphens = true; break;
@@ -90,26 +95,28 @@ namespace PhotoFiler
                     Console.WriteLine("   -h                         : Show Usage");
                     Console.WriteLine("   -v                         : Verbose");
                     Console.WriteLine("   -r                         : Recursive");
+                    Console.WriteLine("   -d                         : Dummy Run");
                     Console.WriteLine("Filters:");
-                    Console.WriteLine("   --Branded                  : Process only images that have Camera Make and Model in the EXIF metadata");
-                    Console.WriteLine("   --Unbranded                : Process only images that DO NOT have Camera Make and Model in the EXIF metadata");
-                    Console.WriteLine("   --Known                    : Process all images taken with one of MY Cameras");
-                    Console.WriteLine("   --Unknown                  : Process all images except those taken with one MY Cameras");
-                    Console.WriteLine("   --Fullsize                 : Process only images that appear to have their original dimensions");
-                    Console.WriteLine("   --NotFullsize              : Process only images that appear to have been cropped or resized");
-                    Console.WriteLine("   --CorrectFiletimeVsExifTime      : Process only images that have a file timestamp that matches Exif date taken");
+                    Console.WriteLine("   --Branded                           : Process only images that have Camera Make and Model in the EXIF metadata");
+                    Console.WriteLine("   --Unbranded                         : Process only images that DO NOT have Camera Make and Model in the EXIF metadata");
+                    Console.WriteLine("   --Known                             : Process all images taken with one of MY Cameras");
+                    Console.WriteLine("   --Unknown                           : Process all images except those taken with one MY Cameras");
+                    Console.WriteLine("   --Fullsize                          : Process only images that appear to have their original dimensions");
+                    Console.WriteLine("   --NotFullsize                       : Process only images that appear to have been cropped or resized");
+                    Console.WriteLine("DateTime Filters:");
+                    Console.WriteLine("   --CorrectFiletimeVsExifTime         : Process only images that have a file timestamp that matches Exif date taken");
                     Console.WriteLine("   --CorrectFilenamePrefixVsExifTime   : Process only images that have a filename prefix that matches Exif date taken");
-                    Console.WriteLine("   --CorrectFilenamePrefixVsFiletime : Process only images that have a filename prefix that matches the FS file timestamp");
-                    Console.WriteLine("   --IncorrectFiletimes         : Process only images that have a file timestamp that does not match Exif date taken");
+                    Console.WriteLine("   --CorrectFilenamePrefixVsFiletime   : Process only images that have a filename prefix that matches the FS file timestamp");
+                    Console.WriteLine("   --IncorrectFiletimeVsExifTime       : Process only images that have a file timestamp that does not match Exif date taken");
                     Console.WriteLine("   --IncorrectFilenamePrefixVsExifTime : Process only images that have a filename prefix that does not match Exif date taken");
                     Console.WriteLine("   --IncorrectFilenamePrefixVsFiletime : Process only images that have a filename prefix that does not match the FS file timestamp");
                     //Console.WriteLine("Actions:");
                     //Console.WriteLine("   --FixFilenamePrefixes      : Add/Fix Filename timestamp prefixes");
-                    //Console.WriteLine("   --FixFiletimes          : FixFiletimes");
+                    //Console.WriteLine("   --FixFiletimes             : FixFiletimes");
                     //Console.WriteLine("   --ForceUnderscores         : ForceUnderscores");
                     //Console.WriteLine("   --ForceSpacesAndHyphens    : ForceSpacesAndHyphens");
                     //Console.WriteLine("   --FileByDate               : FileByDate");
-                    //Console.WriteLine("   --FixAll                   : FixFiletimes, ForceUnderscores");
+                    //Console.WriteLine("   --FixAll                   : FixFilenamePrefixes, FixFiletimes, ForceUnderscores");
                     return 0;
                 }
                 if (fTesting)
@@ -140,7 +147,7 @@ namespace PhotoFiler
                 Console.Error.WriteLine($"FATAL: {ex}");
                 return -1;
             }
-            //if (fVerbose)
+            if (fVerbose)
             {
                 Console.WriteLine("Press any key to continue...");
                 Console.ReadKey();
@@ -274,8 +281,10 @@ namespace PhotoFiler
                                     "Ft:" + Truncate(fnp1.imageFiletimeString,15) + "\t" + 
                                     "Fp:" + Truncate(fnp1.imageFilenamePrefixString,15) + "\t" + 
                                     "Fs:" + fnp1.imageFilesize + "\t" + 
-                                    "Fn:" + fnp1.imageFilename);
+                                    "Fn:" + fnp1.imageFilename + "\t" + 
+                                    "Fn:" + fnp1.fullyQualifiedFilename );
             }
+            //fFixFilenamePrefixes
             //fFixFiletimes
             //fForceUnderscores
             //fForceSpacesAndHyphens
@@ -340,50 +349,62 @@ namespace PhotoFiler
             return false;
         }
 
-        public static bool RoughlyEquals(DateTime time, DateTime timeWithWindow, int windowInSeconds, int frequencyInSeconds)
+        public static bool RoughlyEquals(DateTime time, DateTime timeWithWindow, int windowInSeconds)
         {
-            long delta = (long)((TimeSpan)(timeWithWindow - time)).TotalSeconds % frequencyInSeconds;
-            delta = delta > windowInSeconds ? frequencyInSeconds - delta : delta;
+            long delta = (long)((TimeSpan)(timeWithWindow - time)).TotalSeconds;
             return Math.Abs(delta) < windowInSeconds;
         }
 
-        public static bool isFiletimeCorrect(DateTime? datetimeOriginal, DateTime? imageFiletime )
+        public static bool isFiletimeCorrect(DateTime? exiftime, DateTime? filetime )
         {
             int window = 10;
-            int freq = 60 * 60 * 2; // 2 hours;
             DateTime temp1;
 
-            // If we don't have an exif datetime, then we have to assume that the filetime is correct.
-            if (datetimeOriginal==null) return true;
-            // If the filetime is null, then we have bigger problems
-            if (imageFiletime==null) return false;
+            // If we don't have an exifdatetime, then we have to assume that the filetime is correct.
+            //if (exiftime==null) return true;
 
-            if (RoughlyEquals((DateTime)datetimeOriginal, (DateTime)imageFiletime, window, freq)) return true;
-            temp1 = ((DateTime)imageFiletime).AddHours(1);
-            if (RoughlyEquals((DateTime)datetimeOriginal, temp1, window, freq)) return true;
-            temp1 = ((DateTime)imageFiletime).AddHours(-1);
-            if (RoughlyEquals((DateTime)datetimeOriginal, temp1, window, freq)) return true;
+            // If we don't have an exif datetime, then we have no way of knowing that the filetime is correct.
+            if (exiftime==null) return false;
+
+            // If the filetime is null, then we have bigger problems
+            if (filetime==null) return false;
+
+            if (RoughlyEquals((DateTime)exiftime, (DateTime)filetime, window)) return true;
+
+            temp1 = (DateTime)filetime;
+            temp1 = temp1.AddHours(1);
+            if (RoughlyEquals((DateTime)exiftime, temp1, window)) return true;
+
+            temp1 = (DateTime)filetime;
+            temp1 = temp1.AddHours(-1);
+            if (RoughlyEquals((DateTime)exiftime, temp1, window)) return true;
 
             return false;
         }
 
-        public static bool isFilenamePrefixCorrect(DateTime? datetimeOriginal, FilenamePrefix fnp1 )
+        public static bool isFilenamePrefixCorrect(DateTime? refDateTime, FilenamePrefix fnp1 )
         {
             // If we don't have a timestamp in the filename, then return false
             if (fnp1.hasValidFilenamePrefix==false) return false;
 
             // If we don't have an exif datetime, then we have to assume that any time in the filename is correct.
-            if (datetimeOriginal==null) return true;
+            //if (refDateTime==null) return true;
+
+            // If we don't have a refdatetime, then we do not know if any time in the filename is correct.
+            if (refDateTime==null) return false;
 
             int window = 10;
-            int freq = 60 * 60 * 2; // 2 hours;
             DateTime temp1;
 
-            if (RoughlyEquals((DateTime)datetimeOriginal, fnp1.imageFilenamePrefix, window, freq)) return true;
-            temp1 = fnp1.imageFilenamePrefix.AddHours(1);
-            if (RoughlyEquals((DateTime)datetimeOriginal, temp1, window, freq)) return true;
-            temp1 = fnp1.imageFilenamePrefix.AddHours(-1);
-            if (RoughlyEquals((DateTime)datetimeOriginal, temp1, window, freq)) return true;
+            if (RoughlyEquals((DateTime)refDateTime, fnp1.imageFilenamePrefix, window)) return true;
+
+            temp1 = fnp1.imageFilenamePrefix;
+            temp1 = temp1.AddHours(1);
+            if (RoughlyEquals((DateTime)refDateTime, temp1, window)) return true;
+
+            temp1 = fnp1.imageFilenamePrefix;
+            temp1 = temp1.AddHours(-1);
+            if (RoughlyEquals((DateTime)refDateTime, temp1, window)) return true;
 
             return false;
         }

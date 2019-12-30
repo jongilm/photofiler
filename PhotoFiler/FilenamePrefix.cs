@@ -11,7 +11,7 @@ namespace PhotoFiler
     {
         public static bool fVerbose = false;
 
-        public string filePath { get; set; }
+        public string fullyQualifiedFilename { get; set; }
 
         public string imageFilename { get; set; }
         public long imageFilesize { get; set; }
@@ -23,11 +23,11 @@ namespace PhotoFiler
 
         public FilenamePrefix(string filename)
         {
-            filePath = filename;
+            fullyQualifiedFilename = filename;
 
-            imageFilename = new FileInfo(filePath).Name;
-            imageFilesize = GetFilesize(filePath);
-            imageFiletime = GetFiletime(filePath);
+            imageFilename = new FileInfo(fullyQualifiedFilename).Name;
+            imageFilesize = GetFilesize(fullyQualifiedFilename);
+            imageFiletime = GetFiletime(fullyQualifiedFilename);
             imageFiletimeString = imageFiletime.ToString("yyyyMMdd'_'HHmmss");
 
             // If we don't have a timestamp in the filename, then return false
@@ -48,17 +48,27 @@ namespace PhotoFiler
 
         long GetFilesize(string filePath)
         {
-            System.IO.FileInfo f = new System.IO.FileInfo(filePath);
-            if (f == null) return -1;
-            long temp = f.Length;
+            System.IO.FileInfo finfo = new System.IO.FileInfo(filePath);
+            if (finfo == null)
+            {
+                Console.WriteLine($"FATAL: GetFilesize() cannot get FileInfo() for file: {filePath}");
+                System.Environment.Exit(1);
+            }
+            long temp = finfo.Length;
             return temp;
         }
 
         System.DateTime GetFiletime(string filePath)
         {
-            System.IO.FileInfo f = new System.IO.FileInfo(filePath);
-            if (f == null) return System.DateTime.Now;
-            System.DateTime temp = f.CreationTime;
+            System.IO.FileInfo finfo = new System.IO.FileInfo(filePath);
+            if (finfo == null)
+            {
+                Console.WriteLine($"FATAL: GetFiletime() cannot get FileInfo() for file: {filePath}");
+                System.Environment.Exit(2);
+            }
+            //System.DateTime temp = finfo.CreationTime;
+            System.DateTime temp = finfo.LastWriteTime;
+
             return temp;
         }
 
