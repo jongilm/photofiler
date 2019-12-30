@@ -20,6 +20,7 @@ namespace PhotoFiler
         public bool hasValidFilenamePrefix { get; set; }
         public DateTime imageFilenamePrefix { get; set; }
         public string imageFilenamePrefixString { get; set; }
+        public bool filenameStartsWithYYYY { get; set; }
 
         public FilenamePrefix(string filename)
         {
@@ -29,6 +30,8 @@ namespace PhotoFiler
             imageFilesize = GetFilesize(fullyQualifiedFilename);
             imageFiletime = GetFiletime(fullyQualifiedFilename);
             imageFiletimeString = imageFiletime.ToString("yyyyMMdd'_'HHmmss");
+
+            filenameStartsWithYYYY = FilenameStartsWithYYYY(imageFilename);
 
             // If we don't have a timestamp in the filename, then return false
             DateTime temp;
@@ -102,6 +105,52 @@ namespace PhotoFiler
             return true;
         }
 
+        public static bool FilenameStartsWithYYYY (string imageFilename)
+        { 
+            // YYYYMMDD_blahblahblah
+            // YYYYxxxx_blahblahblah
+            // YYYYMMxx_blahblahblah
+            // YYYYMMDD_xxxxxx_blahblahblah
+            // YYYY_MM_DD_blahblahblah
+            // YYYY_MM_DD_hh_mm_ss_blahblahblah
+            // YYYY_MM_DD_xx_xx_xx_blahblahblah
+
+            bool fFilenameStartsWithYYYY = false;
+            int YYYY = 0;
+
+            if (imageFilename.Length >= 4)
+            { 
+                int number;
+                bool isParsable = Int32.TryParse(imageFilename.Substring(0,4), out number);
+                if (isParsable)
+                {
+                    if (number>=1900 && number<=2099)
+                    {
+                        YYYY = number;
+                        fFilenameStartsWithYYYY = true;
+                    }
+                }
+            }
+            return fFilenameStartsWithYYYY;
+        }
+
+        public static string ModifyFilenameWithPrefixAndSuffix(string fullyQualifiedFilename, string prefix, string suffix)
+        {
+            string directory = Path.GetDirectoryName(fullyQualifiedFilename);
+            string basename = Path.GetFileNameWithoutExtension(fullyQualifiedFilename);
+            string extension = Path.GetExtension(fullyQualifiedFilename);
+            if (prefix != null)
+            {
+                basename = String.Concat(prefix, basename);
+            }
+            if (suffix != null)
+            {
+                basename = String.Concat(basename, suffix);
+            }
+            string newfilename = String.Concat(basename, extension);
+            string newfullyQualifiedFilename = Path.Combine(directory, newfilename);
+            return newfullyQualifiedFilename;
+        }
 
     }
 }
