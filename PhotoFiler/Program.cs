@@ -40,9 +40,11 @@ namespace PhotoFiler
         public static int numberOfFilesProcessed = 0;
         public static int numberOfFilesShown = 0;
         public static int numberOfFilesFiltered = 0;
+        public static int numberOfFilesActioned = 0;
 
         static int Main( string[] args )
         {
+            Console.WriteLine("PhotoFiler v0.80 Copyright (c) 2019 Jonathan Gilmore");
             try
             {
                 string filePath = @".";
@@ -51,6 +53,7 @@ namespace PhotoFiler
                 //filePath = @"C:/Users/Jonnie/source/repos/PhotoFiler/PhotoFiler/bin/Debug";
                 for (int ii = 0; ii<args.Length; ii++)
                 {
+                    Console.WriteLine($"args[{ii}]: {args[ii]}");
                     if (args[ii].Substring(0,1) == "-")
                     { 
                         switch (args[ii].ToLower())
@@ -150,6 +153,7 @@ namespace PhotoFiler
                 Console.WriteLine("numberOfFilesProcessed = " + numberOfFilesProcessed );
                 Console.WriteLine("numberOfFilesShown     = " + numberOfFilesShown );
                 Console.WriteLine("numberOfFilesFiltered  = " + numberOfFilesFiltered );
+                Console.WriteLine("numberOfFilesActioned  = " + numberOfFilesActioned );
             }
             catch (Exception ex)
             {
@@ -344,6 +348,7 @@ namespace PhotoFiler
                     Console.WriteLine($"ACTION: SetLastWriteTime({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) (was {fnp1.imageFiletimeString})");
                     File.SetLastWriteTime(fnp1.fullyQualifiedFilename, (DateTime)exif1.datetimeOriginal);
                 }
+                numberOfFilesActioned++;
             }
             if (fActionAddMissingFilenamePrefix &&
                 (fnp1.filenameStartsWithYYYY == false) &&
@@ -361,6 +366,7 @@ namespace PhotoFiler
                     Console.WriteLine($"ACTION: AddFilenamePrefix({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) ==> {newFilename}");
                     System.IO.File.Move(fnp1.fullyQualifiedFilename, newFilename);
                 }
+                numberOfFilesActioned++;
             }
             //fForceUnderscores
             //fForceSpacesAndHyphens
