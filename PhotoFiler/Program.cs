@@ -31,7 +31,7 @@ namespace PhotoFiler
         public static bool fShowMissingFilenamePrefix = false;
         // Actions
         public static bool fActionSetFiletimeFromExifTime = false;
-        //public static bool fActionFixMalformedFilenamePrefix = false;
+        public static bool fActionFixMalformedFilenamePrefix = false;
         public static bool fActionAddMissingFilenamePrefix = false;
         //public static bool fActionForceUnderscores = false;
         //public static bool fActionForceSpacesAndHyphens = false;
@@ -80,7 +80,7 @@ namespace PhotoFiler
                             case "--showmissingfilenameprefix": fShowMissingFilenamePrefix = true; break;
 
                             case "--setfiletimesfromexiftimes": fActionSetFiletimeFromExifTime = true; break;
-                            //case "--fixmalformedfilenameprefixes": fActionFixMalformedFilenamePrefix = true; break;
+                            case "--fixmalformedfilenameprefix": fActionFixMalformedFilenamePrefix = true; break;
                             case "--addmissingfilenameprefix": fActionAddMissingFilenamePrefix = true; break;
                             //case "--forceunderscores": fActionForceUnderscores = true; break;
                             //case "--forcespacesandhyphens": fActionForceSpacesAndHyphens = true; break;
@@ -123,7 +123,7 @@ namespace PhotoFiler
                     Console.WriteLine("   --ShowMissingFilenamePrefix             : Process only images that have a no filename prefix, including any malformed prefix");
                     Console.WriteLine("Actions:");
                     Console.WriteLine("   --SetFiletimesFromExifTimes             : Set File timestamps from Exif timestamps");
-                    //Console.WriteLine("   --FixMalformedFilenamePrefixes          : Add/Fix Filename timestamp prefixes");
+                    Console.WriteLine("   --FixMalformedFilenamePrefix            : Fix Malformed Filename timestamp prefixes");
                     Console.WriteLine("   --AddMissingFilenamePrefix              : Add Filename timestamp prefix if not already present (and not malformed)");
                     //Console.WriteLine("   --ForceUnderscores         : ForceUnderscores");
                     //Console.WriteLine("   --ForceSpacesAndHyphens    : ForceSpacesAndHyphens");
@@ -219,10 +219,11 @@ namespace PhotoFiler
                 return;
             }
 
+            ////////////////////////////////
+            // Get image metadata and file attrs
+            ////////////////////////////////
             PhotoFiler.ExifData exif1 = new ExifData(filePath);
             PhotoFiler.FilenamePrefix fnp1 = new FilenamePrefix(filePath);
-
-            long pixels = (exif1.imageHeight * exif1.imageWidth);
 
             // Testing
             //if (fnp1.imageFilename == "SCN_0004_photo_used_at_Andre_and_Debbies_25th_Anniv.jpg.jpg" ||
@@ -231,13 +232,17 @@ namespace PhotoFiler
             //    Console.WriteLine($"DEBUGGING: isFiletimeCorrect() - Inconsistent metadata");
             //}
 
+
+            ////////////////////////////////
+            // Apply filters
+            ////////////////////////////////
             numberOfFilesProcessed++;
-            if (fShowOnlyBrandedCameras && (exif1.cameraMake == "" || exif1.cameraModel == ""))
+            if (fShowOnlyBrandedCameras && !exif1.isBranded())
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fShowOnlyUnbrandedCameras && (exif1.cameraMake != "" || exif1.cameraModel != ""))
+            if (fShowOnlyUnbrandedCameras && exif1.isBranded())
             {
                 numberOfFilesFiltered++;
                 return;
@@ -252,12 +257,12 @@ namespace PhotoFiler
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fShowOnlyDimensionsFullsize && !isFullSizeImage(exif1.cameraMake, exif1.cameraModel, pixels))
+            if (fShowOnlyDimensionsFullsize && !isFullSizeImage(exif1.cameraMake, exif1.cameraModel, exif1.pixels))
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fShowOnlyDimensionsNotFullsize && isFullSizeImage(exif1.cameraMake, exif1.cameraModel, pixels))
+            if (fShowOnlyDimensionsNotFullsize && isFullSizeImage(exif1.cameraMake, exif1.cameraModel, exif1.pixels))
             {
                 numberOfFilesFiltered++;
                 return;
@@ -267,11 +272,6 @@ namespace PhotoFiler
                 numberOfFilesFiltered++;
                 return;
             }
-            //if (fIncorrectFiletimeVsExifTimeOnly && exif1.hasValidExifTimestamp && isFiletimeCorrect(exif1, fnp1))
-            //{
-            //    numberOfFilesFiltered++;
-            //    return;
-            //}
             if (fShowOnlyIncorrectFilenamePrefixVsExifTime && (!fnp1.hasValidFilenamePrefix || !exif1.hasValidExifTimestamp || isFilenamePrefixCorrect(exif1.datetimeOriginal, fnp1 )) )
             {
                 numberOfFilesFiltered++;
@@ -297,18 +297,21 @@ namespace PhotoFiler
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fShowMalformedFilenamePrefix && !(fnp1.filenameStartsWithYYYY && !fnp1.hasValidFilenamePrefix))
+            if (fShowMalformedFilenamePrefix && !fnp1.hasMalformedFilenamePrefix())
             {
                 numberOfFilesFiltered++;
                 return;
             }
-            if (fShowMissingFilenamePrefix && (fnp1.filenameStartsWithYYYY || fnp1.hasValidFilenamePrefix))
+            if (fShowMissingFilenamePrefix && (!exif1.hasValidExifTimestamp || fnp1.filenameStartsWithYYYY || fnp1.hasValidFilenamePrefix))
             {
                 numberOfFilesFiltered++;
                 return;
             }
             numberOfFilesShown++;
 
+            ////////////////////////////////
+            // Print result to console
+            ////////////////////////////////
             if (fVerbose)
             {
                 Console.WriteLine("   cameraMake/Model: " + exif1.cameraMake + "/" + exif1.cameraModel);
@@ -322,7 +325,7 @@ namespace PhotoFiler
             }
             else
             {
-                double megapixels = (double)(pixels)/(1024*1024);
+                double megapixels = (double)(exif1.pixels)/(1024*1024);
                 Console.WriteLine(  "Ma:" + Truncate(exif1.cameraMake,22) + "\t" +
                                     "Mo:" + Truncate(exif1.cameraModel,22) + "\t" +
                                     "HxW:" + exif1.imageHeight + "x" + exif1.imageWidth + "\t" + 
@@ -334,6 +337,10 @@ namespace PhotoFiler
                                     "Fn:" + fnp1.imageFilename + "\t" + 
                                     "Fn:" + fnp1.fullyQualifiedFilename );
             }
+
+            ////////////////////////////////
+            // Perform any actions
+            ////////////////////////////////
             if ( fActionSetFiletimeFromExifTime &&
                  exif1.hasValidExifTimestamp &&
                  isFiletimeCorrect(exif1, fnp1) == false &&
@@ -364,7 +371,45 @@ namespace PhotoFiler
                 else
                 { 
                     Console.WriteLine($"ACTION: AddFilenamePrefix({fnp1.fullyQualifiedFilename}, {exif1.datetimeOriginalString}) ==> {newFilename}");
-                    System.IO.File.Move(fnp1.fullyQualifiedFilename, newFilename);
+                    try
+                    {
+                        System.IO.File.Move(fnp1.fullyQualifiedFilename, newFilename);
+                    }
+                    catch(System.IO.IOException ex)
+                    {
+                        // Cannot create a file when that file already exists.
+                        Console.WriteLine($"ERROR: Unable to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newFilename}) (already exists?): {ex}");
+                        // Keep going.
+                    }
+                }
+                numberOfFilesActioned++;
+            }
+            if ( fActionFixMalformedFilenamePrefix &&
+                (fnp1.filenameStartsWithYYYY == true) &&
+                (fnp1.hasValidFilenamePrefix == false) &&
+                File.Exists(fnp1.fullyQualifiedFilename) )
+            {
+                if (fnp1.imageFilesize == 5419638)
+                    Console.WriteLine($"Breakpoint");
+
+                string newfullyQualifiedFilename = FilenamePrefix.RepairFilenamePrefix(fnp1.fullyQualifiedFilename);
+                if (fDummyRun)
+                {
+                    Console.WriteLine($"DUMMY: FixFilenamePrefix({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
+                }
+                else
+                { 
+                    Console.WriteLine($"ACTION: FixFilenamePrefix({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
+                    try
+                    {
+                        System.IO.File.Move(fnp1.fullyQualifiedFilename, newfullyQualifiedFilename);
+                    }
+                    catch(System.IO.IOException ex)
+                    {
+                        // Cannot create a file when that file already exists.
+                        Console.WriteLine($"ERROR: Unable to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newfullyQualifiedFilename}) (already exists?): {ex}");
+                        // Keep going.
+                    }
                 }
                 numberOfFilesActioned++;
             }

@@ -51,6 +51,7 @@ namespace PhotoFiler
         public System.DateTime? datetimeOriginal { get; set; }
         public string datetimeOriginalString { get; set; }
         public bool hasValidExifTimestamp { get; set; }
+        public long pixels { get; set; }
         
 
         public ExifData(string filename)
@@ -86,6 +87,7 @@ namespace PhotoFiler
         {
             imageHeight = this.GetImageHeight(directories);
             imageWidth = this.GetImageWidth(directories);
+            pixels = (imageHeight * imageWidth);
             datetimeOriginal = this.GetTakenDateTime(directories);
             if (datetimeOriginal != null)
             {
@@ -104,6 +106,12 @@ namespace PhotoFiler
             //lensMake = this.GetLensMake(directories);
             //lensModel = this.GetLensModel(directories);
         }
+
+        public bool isBranded()
+        {
+            return (cameraMake.Length > 0 && cameraModel.Length > 0);
+        }
+
 
         int GetImageWidth(IEnumerable<MetadataExtractor.Directory> directories)
         {
@@ -226,6 +234,7 @@ namespace PhotoFiler
             // Get tag description
             return descriptor.GetExposureProgramDescription();
         }
+
 
         void PrintListOfDirectories(IEnumerable<MetadataExtractor.Directory> directories)
         {
