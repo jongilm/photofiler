@@ -10,7 +10,7 @@ namespace PhotoFiler
     class FilenamePrefix
     {
         public static bool fVerbose = false;
-        public static bool fDebugging = true;
+        public static bool fDebugging = false;
 
         public string fullyQualifiedFilename { get; set; }
 
@@ -252,7 +252,7 @@ namespace PhotoFiler
                 IsValidSeperator(basename, start+7) &&           // 1  [7]
                 IsValidDay(basename, start+8, YYYY, MM, out DD)) // 2  [8..9]
             {
-                    return true;
+                return true;
             }
             return false;
         }
@@ -270,7 +270,7 @@ namespace PhotoFiler
                 IsValidSeperator(basename, start+6) &&       // 1 [16]
                 IsValidSecond(basename, start+7, out ss))    // 2 [17..18]
             {
-                    return true;
+                return true;
             }
             return false;
         }
@@ -284,7 +284,7 @@ namespace PhotoFiler
                 IsValidMonth(basename, start+4, out MM) &&       // 2 [4..5]
                 IsValidDay(basename, start+6, YYYY, MM, out DD)) // 2 [6..7]
             {
-                    return true;
+                return true;
             }
             return false;
         }
@@ -300,7 +300,22 @@ namespace PhotoFiler
                 IsValidMinute(basename, start+3, out mm) &&   // 2 [11..12]
                 IsValidSecond(basename, start+5, out ss))     // 2 [13..14]
             {
-                    return true;
+                return true;
+            }
+            return false;
+        }
+
+        public static bool IsValid_xxxxxx_withoutseparator(string basename, int start, out int hh, out int mm, out int ss)
+        {
+            hh = 12;
+            mm = 0;
+            ss = 0;
+            // Test for YYYYMMDDhhmmss (14)  (including YYYYxxxxxxxxxx etc)
+            if (IsValidHour(basename, start, out hh) &&     // 2 [8..9]]
+                IsValidMinute(basename, start+2, out mm) &&   // 2 [10..11]
+                IsValidSecond(basename, start+4, out ss))     // 2 [12..13]
+            {
+                return true;
             }
             return false;
         }
@@ -368,6 +383,14 @@ namespace PhotoFiler
                             Console.WriteLine($"INFO: RepairFilenamePrefix({YYYY},{MM},{DD},{hh},{mm},{ss})");
                         datetime = new DateTime(YYYY,MM,DD,hh,mm,ss);
                         newbasename =  String.Concat(datetime.ToString("yyyyMMdd'_'HHmmss"), basename.Substring(15));
+                    }
+                    else if (IsValid_xxxxxx_withoutseparator(basename, 8, out hh, out mm, out ss)) // Test for hhmmss (14)  (including xxxxxx etc)
+                    {
+                        // YYYYMMDDhhmmss [14]
+                        if (fDebugging)
+                            Console.WriteLine($"INFO: RepairFilenamePrefix({YYYY},{MM},{DD},{hh},{mm},{ss})");
+                        datetime = new DateTime(YYYY,MM,DD,hh,mm,ss);
+                        newbasename =  String.Concat(datetime.ToString("yyyyMMdd'_'HHmmss"), basename.Substring(14));
                     }
                     else
                     { 

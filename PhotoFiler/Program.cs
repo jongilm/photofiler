@@ -389,8 +389,8 @@ namespace PhotoFiler
                 (fnp1.hasValidFilenamePrefix == false) &&
                 File.Exists(fnp1.fullyQualifiedFilename) )
             {
-                if (fnp1.imageFilesize == 5419638)
-                    Console.WriteLine($"Breakpoint");
+                //if (fnp1.imageFilesize == 5419638)
+                //    Console.WriteLine($"Breakpoint");
 
                 string newfullyQualifiedFilename = FilenamePrefix.RepairFilenamePrefix(fnp1.fullyQualifiedFilename);
                 if (fDummyRun)

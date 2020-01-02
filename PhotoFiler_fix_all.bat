@@ -4,23 +4,34 @@ rem set LOG_DIR=J:\tmp\logs\
 set LOG_DIR=%USERPROFILE%\tmp\logs\
 rem set LOG_DIR=%USERPROFILE%\Documents\tmp\logs\
 mkdir %LOG_DIR%
-call :MAKE_FILENAME %LOG_DIR% PhotoFiler .txt
-SET LOGFILENAME=%tmp_filename%
 
 @echo on
+call :MAKE_FILENAME %LOG_DIR% PhotoFiler_SHOW1 .txt
+SET LOGFILENAME=%tmp_filename%
+CALL :SHOW c:\Users\Jonnie\Downloads
+CALL :SHOW c:\Users\Jonnie\Pictures
+CALL :SHOW c:\home\_Photos\
+CALL :SHOW d:\home\_Photos\
+
+call :MAKE_FILENAME %LOG_DIR% PhotoFiler_FIX .txt
+SET LOGFILENAME=%tmp_filename%
 CALL :FIX c:\Users\Jonnie\Downloads
 CALL :FIX c:\Users\Jonnie\Pictures
 CALL :FIX c:\home\_Photos\
 CALL :FIX d:\home\_Photos\
-rem CALL :SHOW c:\Users\Jonnie\Downloads
-rem CALL :SHOW c:\Users\Jonnie\Pictures
-rem CALL :SHOW c:\home\_Photos\
-rem CALL :SHOW d:\home\_Photos\
+
+call :MAKE_FILENAME %LOG_DIR% PhotoFiler_SHOW2 .txt
+SET LOGFILENAME=%tmp_filename%
+CALL :SHOW c:\Users\Jonnie\Downloads
+CALL :SHOW c:\Users\Jonnie\Pictures
+CALL :SHOW c:\home\_Photos\
+CALL :SHOW d:\home\_Photos\
 goto :EOF
 
 :FIX
 .\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowIncorrectFiletimeVsExifTime --SetFiletimesFromExifTimes  >> %LOGFILENAME%
 .\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowMissingFilenamePrefix       --AddMissingFilenamePrefix   >> %LOGFILENAME%
+.\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowMalformedFilenamePrefix     --FixMalformedFilenamePrefix >> %LOGFILENAME%
 goto :EOF
 
 :SHOW
@@ -42,8 +53,8 @@ goto :EOF
 .\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowIncorrectFiletimeVsExifTime          >> %LOGFILENAME%
 .\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowIncorrectFilenamePrefixVsExiftime    >> %LOGFILENAME%
 .\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowIncorrectFilenamePrefixVsFiletime    >> %LOGFILENAME%
-.\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowMalformedFilenamePrefix              >> %LOGFILENAME%
 .\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowMissingFilenamePrefix                >> %LOGFILENAME%
+.\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowMalformedFilenamePrefix              >> %LOGFILENAME%
 .\PhotoFiler\bin\Release\PhotoFiler.exe %1 -r --ShowKnown --ShowNotFullsize                          >> %LOGFILENAME%
 goto :EOF
 
