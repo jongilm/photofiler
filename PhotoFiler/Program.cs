@@ -29,11 +29,14 @@ namespace PhotoFiler
         public static bool fShowOnlyCorrectFilenamePrefixVsFiletime = false;
         public static bool fShowMalformedFilenamePrefix = false;
         public static bool fShowMissingFilenamePrefix = false;
+        public static bool fShowSpacesAndHyphens = false;
+        
         // Actions
         public static bool fActionSetFiletimeFromExifTime = false;
         public static bool fActionFixMalformedFilenamePrefix = false;
         public static bool fActionAddMissingFilenamePrefix = false;
-        //public static bool fActionForceUnderscores = false;
+        public static bool fActionFixFilenamePrefixFromExifTime = false;
+        public static bool fActionForceUnderscores = false;
         //public static bool fActionForceSpacesAndHyphens = false;
         //public static bool fActionFileByDate = false;
         // Counters
@@ -44,7 +47,9 @@ namespace PhotoFiler
 
         static int Main( string[] args )
         {
-            Console.WriteLine("PhotoFiler v0.80 Copyright (c) 2019 Jonathan Gilmore");
+            Console.WriteLine("PhotoFiler v0.92 Copyright (c) 2019-2020 Jonathan Gilmore");
+            // 20200105 v0.92 - Added Nokia N73 to known cameras
+
             try
             {
                 string filePath = @".";
@@ -78,13 +83,36 @@ namespace PhotoFiler
                             case "--showincorrectfilenameprefixvsfiletime": fShowOnlyIncorrectFilenamePrefixVsFiletime = true; break;
                             case "--showmalformedfilenameprefix": fShowMalformedFilenamePrefix = true; break;
                             case "--showmissingfilenameprefix": fShowMissingFilenamePrefix = true; break;
+                            case "--showspacesandhyphens": fShowSpacesAndHyphens = true; break;
+                            //case "--showallproblems":
+                            //    fShowAllProblems = true;
+                            //    //fShowOnlyUnbrandedCameras = true;
+                            //    //fShowOnlyUnknownCameras = true;
+                            //    //fShowOnlyDimensionsNotFullsize = true;
+                            //    //fShowOnlyCorrectFilenamePrefixVsExifTime = true;
+                            //    //fShowOnlyCorrectFilenamePrefixVsFiletime = true;
+                            //    //fShowOnlyIncorrectFiletimeVsExifTime = true;
+                            //    //fShowOnlyIncorrectFilenamePrefixVsExifTime = true;
+                            //    //fShowOnlyIncorrectFilenamePrefixVsFiletime = true;
+                            //    //fShowMalformedFilenamePrefix = true;
+                            //    //fShowMissingFilenamePrefix = true;
+                            //    break;
 
                             case "--setfiletimesfromexiftimes": fActionSetFiletimeFromExifTime = true; break;
                             case "--fixmalformedfilenameprefix": fActionFixMalformedFilenamePrefix = true; break;
                             case "--addmissingfilenameprefix": fActionAddMissingFilenamePrefix = true; break;
-                            //case "--forceunderscores": fActionForceUnderscores = true; break;
+                            case "--fixfilenameprefixfromexiftime": fActionFixFilenamePrefixFromExifTime = true; break;
+                            case "--forceunderscores": fActionForceUnderscores = true; break;
                             //case "--forcespacesandhyphens": fActionForceSpacesAndHyphens = true; break;
                             //case "--filebydate": fActionFileByDate = true; break;
+                            //case "--fixproblems":
+                            //    fFixAllProblems = true;
+                            //    fActionSetFiletimeFromExifTime = true;
+                            //    fActionFixMalformedFilenamePrefix = true;
+                            //    fActionAddMissingFilenamePrefix = true;
+                            //    fActionFixFilenamePrefixFromExifTime = true;
+                            //    break;
+
                             default: Console.WriteLine($"Unrecognised option: {args[ii]}"); return -1;
                         }
                     }
@@ -112,6 +140,7 @@ namespace PhotoFiler
                     Console.WriteLine("   --ShowUnknown                           : Process all images except those taken with one MY Cameras");
                     Console.WriteLine("   --ShowFullsize                          : Process only images that appear to have their original dimensions");
                     Console.WriteLine("   --ShowNotFullsize                       : Process only images that appear to have been cropped or resized");
+                    Console.WriteLine("   --ShowSpacesAndHyphens                  : Process only images that have Spaces or Hyphens in their filename");
                     Console.WriteLine("DateTime Filters:");
                     Console.WriteLine("   --ShowCorrectFiletimeVsExifTime         : Process only images that have a file timestamp that matches Exif date taken");
                     Console.WriteLine("   --ShowCorrectFilenamePrefixVsExifTime   : Process only images that have a filename prefix that matches Exif date taken");
@@ -125,10 +154,11 @@ namespace PhotoFiler
                     Console.WriteLine("   --SetFiletimesFromExifTimes             : Set File timestamps from Exif timestamps");
                     Console.WriteLine("   --FixMalformedFilenamePrefix            : Fix Malformed Filename timestamp prefixes");
                     Console.WriteLine("   --AddMissingFilenamePrefix              : Add Filename timestamp prefix if not already present (and not malformed)");
-                    //Console.WriteLine("   --ForceUnderscores         : ForceUnderscores");
+                    Console.WriteLine("   --FixFilenamePrefixFromExifTime         : Set Filename timestamp prefixes from Exif timestamps");
+                    Console.WriteLine("   --ForceUnderscores                      : ForceUnderscores");
                     //Console.WriteLine("   --ForceSpacesAndHyphens    : ForceSpacesAndHyphens");
                     //Console.WriteLine("   --FileByDate               : FileByDate");
-                    //Console.WriteLine("   --FixAll                   : fActionAddMissingFilenamePrefix, fSetFiletimesFromExifTimes, fForceUnderscores");
+                    //Console.WriteLine("   --FixAll                   : fActionAddMissingFilenamePrefix, fSetFiletimesFromExifTimes, fActionForceUnderscores");
                     return 0;
                 }
                 if (fTesting)
@@ -307,6 +337,12 @@ namespace PhotoFiler
                 numberOfFilesFiltered++;
                 return;
             }
+            if (fShowSpacesAndHyphens && !fnp1.filenameContainsSpaceOrHyphen)
+            {
+                numberOfFilesFiltered++;
+                return;
+            }
+            
             numberOfFilesShown++;
 
             ////////////////////////////////
@@ -378,7 +414,7 @@ namespace PhotoFiler
                     catch(System.IO.IOException ex)
                     {
                         // Cannot create a file when that file already exists.
-                        Console.WriteLine($"ERROR: Unable to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newFilename}) (already exists?): {ex}");
+                        Console.WriteLine($"ERROR: AddMissingFilenamePrefix failed to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newFilename}) (already exists?): {ex}");
                         // Keep going.
                     }
                 }
@@ -393,30 +429,98 @@ namespace PhotoFiler
                 //    Console.WriteLine($"Breakpoint");
 
                 string newfullyQualifiedFilename = FilenamePrefix.RepairFilenamePrefix(fnp1.fullyQualifiedFilename);
-                if (fDummyRun)
+                // If a repair was indeed made
+                if (newfullyQualifiedFilename != fnp1.fullyQualifiedFilename)
                 {
-                    Console.WriteLine($"DUMMY: FixFilenamePrefix({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
-                }
-                else
-                { 
-                    Console.WriteLine($"ACTION: FixFilenamePrefix({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
-                    try
+                    if (fDummyRun)
                     {
-                        System.IO.File.Move(fnp1.fullyQualifiedFilename, newfullyQualifiedFilename);
+                        Console.WriteLine($"DUMMY: FixMalformedFilenamePrefix({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
                     }
-                    catch(System.IO.IOException ex)
-                    {
-                        // Cannot create a file when that file already exists.
-                        Console.WriteLine($"ERROR: Unable to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newfullyQualifiedFilename}) (already exists?): {ex}");
-                        // Keep going.
+                    else
+                    { 
+                        Console.WriteLine($"ACTION: FixMalformedFilenamePrefix({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
+                        try
+                        {
+                            System.IO.File.Move(fnp1.fullyQualifiedFilename, newfullyQualifiedFilename);
+                        }
+                        catch(System.IO.IOException ex)
+                        {
+                            // Cannot create a file when that file already exists.
+                            Console.WriteLine($"ERROR: FixMalformedFilenamePrefix failed to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newfullyQualifiedFilename}) (already exists?): {ex}");
+                            // Keep going.
+                        }
                     }
+                    numberOfFilesActioned++;
                 }
-                numberOfFilesActioned++;
             }
-            //fForceUnderscores
+            
+            if ( fActionFixFilenamePrefixFromExifTime &&
+                 exif1.hasValidExifTimestamp &&
+                 fnp1.hasValidFilenamePrefix &&
+                 (fnp1.imageFilenamePrefixString != exif1.datetimeOriginalString) &&
+                 File.Exists(fnp1.fullyQualifiedFilename) ) 
+            {
+                string newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(fnp1.fullyQualifiedFilename,fnp1.imageFilenamePrefixString, exif1.datetimeOriginalString);
+                // If a change was indeed made
+                if (newfullyQualifiedFilename != fnp1.fullyQualifiedFilename)
+                {
+                    if (fDummyRun)
+                    {
+                        Console.WriteLine($"DUMMY: FixFilenamePrefixFromExifTime({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
+                    }
+                    else
+                    { 
+                        Console.WriteLine($"ACTION: FixFilenamePrefixFromExifTime({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
+                        try
+                        {
+                            System.IO.File.Move(fnp1.fullyQualifiedFilename, newfullyQualifiedFilename);
+                        }
+                        catch(System.IO.IOException ex)
+                        {
+                            // Cannot create a file when that file already exists.
+                            Console.WriteLine($"ERROR: FixFilenamePrefixFromExifTime failed to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newfullyQualifiedFilename}) (already exists?): {ex}");
+                            // Keep going.
+                        }
+                    }
+                    numberOfFilesActioned++;
+                }
+            }
+            if ( fActionForceUnderscores &&
+                 File.Exists(fnp1.fullyQualifiedFilename) ) 
+            {
+                string newfullyQualifiedFilename = fnp1.fullyQualifiedFilename;
+                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,"-ish", "_ish");
+                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename," - ", "__");
+                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,"-", "__");
+                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename," ", "_");
+                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,".", "_");
+                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,",", "_");
+                // If a change was indeed made
+                if (newfullyQualifiedFilename != fnp1.fullyQualifiedFilename)
+                {
+                    if (fDummyRun)
+                    {
+                        Console.WriteLine($"DUMMY: ForceUnderscores({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
+                    }
+                    else
+                    { 
+                        Console.WriteLine($"ACTION: ForceUnderscores({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
+                        try
+                        {
+                            System.IO.File.Move(fnp1.fullyQualifiedFilename, newfullyQualifiedFilename);
+                        }
+                        catch(System.IO.IOException ex)
+                        {
+                            // Cannot create a file when that file already exists.
+                            Console.WriteLine($"ERROR: ForceUnderscores failed to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newfullyQualifiedFilename}) (already exists?): {ex}");
+                            // Keep going.
+                        }
+                    }
+                    numberOfFilesActioned++;
+                }
+            }
             //fForceSpacesAndHyphens
             //fFileByDate
-
         }
 
         public static string Truncate(string source, int length)
@@ -437,19 +541,20 @@ namespace PhotoFiler
             make = make.Trim();
             model = model.Trim();
 
-            if (make == "Eastman Kodak Company"   && model == "DC210 Zoom (V05.00)") return true; // First digital family camera
-            if (make == "FUJIFILM"                && model == "FinePix A610") return true;  // Old trusty family camera
-            if (make == "Vivitar"                 && model == "ViviCam 3835") return true;  // Clemy's orange camera?
-            if (make == "Panasonic"               && model == "NV-GS120") return true;      // DV Video Camera ?
-            if (make == "Canon"                   && model == "MG4200 series") return true; // Scanner ?
-            if (make == "Nokia"                   && model == "E90") return true;        // Nokia E90 Communicator mobile phone
-            if (make == "SAMSUNG"                 && model == "GT-S7275R") return true;  // Samsung Galaxy Ace3 mobile phone ?
-            if (make == "SAMSUNG"                 && model == "GT-I8160") return true;   // Samsung Galaxy Ace 2 mobile phone
-            if (make == "Sony"                    && model == "E6653") return true;      // Sony Z5 mobile phone
-            if (make == "Panasonic"               && model == "DMC-TZ1") return true;    // Panasonic DMC-TZ1
-            if (make == "Canon"                   && model == "Canon EOS 500D") return true;
-            if (make == "Canon"                   && model == "Canon EOS 750D") return true;
-            if (make == "Google"                  && model == "Pixel 3a") return true;   // Google Pixel 3a mobile phone
+            if (make == "Eastman Kodak Company"   && model == "DC210 Zoom (V05.00)") return true;  // First digital family camera
+            if (make == "FUJIFILM"                && model == "FinePix A610"       ) return true;  // Old trusty family camera
+            if (make == "Vivitar"                 && model == "ViviCam 3835"       ) return true;  // Clemy's orange camera?
+            if (make == "Panasonic"               && model == "NV-GS120"           ) return true;  // DV Video Camera ?
+            if (make == "Nokia"                   && model == "N73"                ) return true;  // Nokia N73
+            if (make == "Nokia"                   && model == "E90"                ) return true;  // Nokia E90 Communicator mobile phone
+            if (make == "SAMSUNG"                 && model == "GT-S7275R"          ) return true;  // Samsung Galaxy Ace3 mobile phone ?
+            if (make == "SAMSUNG"                 && model == "GT-I8160"           ) return true;  // Samsung Galaxy Ace 2 mobile phone
+            if (make == "Sony"                    && model == "E6653"              ) return true;  // Sony Z5 mobile phone
+            if (make == "Panasonic"               && model == "DMC-TZ1"            ) return true;  // Panasonic DMC-TZ1
+            if (make == "Canon"                   && model == "Canon EOS 500D"     ) return true;
+            if (make == "Canon"                   && model == "Canon EOS 750D"     ) return true;
+            if (make == "Google"                  && model == "Pixel 3a"           ) return true;  // Google Pixel 3a mobile phone
+          //if (make == "Canon"                   && model == "MG4200 series"      ) return true;  // Scanner ? // Date of scan is not too useful
             return false;
         }
 
@@ -458,21 +563,37 @@ namespace PhotoFiler
             make = make.Trim();
             model = model.Trim();
 
-            if (make == "Eastman Kodak Company"   && model == "DC210 Zoom (V05.00)" && pixels == (1152*864) ) return true;
-            if (make == "FUJIFILM"                && model == "FinePix A610"        && pixels == (2848*2136) ) return true;
-            if (make == "Vivitar"                 && model == "ViviCam 3835"        && pixels == (1600*1200) ) return true;
-            if (make == "Panasonic"               && model == "NV-GS120"            && pixels == (1520*1152) ) return true;
-            if (make == "Canon"                   && model == "MG4200 series"       && pixels == (2096*1500) ) return true;
-            if (make == "Nokia"                   && model == "E90"                 && pixels == (2048*1536) ) return true;
-            if (make == "SAMSUNG"                 && model == "GT-S7275R"           && pixels == (2560*1920) ) return true;
-            if (make == "SAMSUNG"                 && model == "GT-I8160"            && pixels == (2592*1944) ) return true;
-            if (make == "Sony"                    && model == "E6653"               && pixels == (5984*3366) ) return true;
-            if (make == "Sony"                    && model == "E6653"               && pixels == (2592*1458) ) return true;
-            if (make == "Panasonic"               && model == "DMC-TZ1"             && pixels == (2560*1920) ) return true;
+            if (make == "Canon"                   && model == "Canon EOS 500D"      && pixels == (3000*2000) ) return true;   // MP:  5.7220
             if (make == "Canon"                   && model == "Canon EOS 500D"      && pixels == (4752*3168) ) return true;
+            if (make == "Canon"                   && model == "Canon EOS 500D"      && pixels == (4898*3265) ) return true;
             if (make == "Canon"                   && model == "Canon EOS 750D"      && pixels == (6000*4000) ) return true;
+            if (make == "Canon"                   && model == "Canon EOS 750D"      && pixels == (6000*3368) ) return true;
+            if (make == "Canon"                   && model == "Canon EOS 750D"      && pixels == (5328*4000) ) return true;
+            if (make == "Eastman Kodak Company"   && model == "DC210 Zoom (V05.00)" && pixels == (1152* 864) ) return true;
+            if (make == "FUJIFILM"                && model == "FinePix A610"        && pixels == (2848*2136) ) return true;
             if (make == "Google"                  && model == "Pixel 3a"            && pixels == (4032*3024) ) return true;
+            if (make == "Google"                  && model == "Pixel 3a"            && pixels == (4000*2000) ) return true;   // MP:  7.6294
             if (make == "Google"                  && model == "Pixel 3a"            && pixels == (3264*2448) ) return true;
+            if (make == "Nokia"                   && model == "E90"                 && pixels == (2048*1536) ) return true;   // MP:  3.0000
+            if (make == "Nokia"                   && model == "N73"                 && pixels == (2048*1536) ) return true;   // MP:  3.0000
+            if (make == "Panasonic"               && model == "DMC-TZ1"             && pixels == (2560*1920) ) return true;
+            if (make == "Panasonic"               && model == "DMC-TZ1"             && pixels == (2048*1536) ) return true;
+            if (make == "Panasonic"               && model == "NV-GS120"            && pixels == (1520*1152) ) return true;
+            if (make == "SAMSUNG"                 && model == "GT-I8160"            && pixels == (2560*1920) ) return true;   // MP:  4.6875
+            if (make == "SAMSUNG"                 && model == "GT-I8160"            && pixels == (2592*1944) ) return true;
+            if (make == "SAMSUNG"                 && model == "GT-S7275R"           && pixels == (2560*1536) ) return true;   // MP:  3.7500
+            if (make == "SAMSUNG"                 && model == "GT-S7275R"           && pixels == (2560*1920) ) return true;
+            if (make == "Sony"                    && model == "E6653"               && pixels == (2592*1458) ) return true;
+            if (make == "Sony"                    && model == "E6653"               && pixels == (5333*3000) ) return true;   // MP: 15.2578
+            if (make == "Sony"                    && model == "E6653"               && pixels == (4618*3464) ) return true;   // MP: 15.2557
+            if (make == "Sony"                    && model == "E6653"               && pixels == (3840*2160) ) return true;   // MP:  7.9102
+            if (make == "Sony"                    && model == "E6653"               && pixels == (5520*4140) ) return true;   // MP: 21.7941
+            if (make == "Sony"                    && model == "E6653"               && pixels == (5984*3366) ) return true;
+            if (make == "Vivitar"                 && model == "ViviCam 3835"        && pixels == (1280* 960) ) return true;   // MP:  1.1719
+            if (make == "Vivitar"                 && model == "ViviCam 3835"        && pixels == (1600*1200) ) return true;
+            if (make == "Vivitar"                 && model == "ViviCam 3835"        && pixels == (2272*1704) ) return true;   // MP:  3.6921
+          //if (make == "Canon"                   && model == "MG4200 series"       && pixels == (2096*1500) ) return true;   // Date of scan is not too useful
+
             return false;
         }
 

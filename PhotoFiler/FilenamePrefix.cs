@@ -22,6 +22,7 @@ namespace PhotoFiler
         public DateTime imageFilenamePrefix { get; set; }
         public string imageFilenamePrefixString { get; set; }
         public bool filenameStartsWithYYYY { get; set; }
+        public bool filenameContainsSpaceOrHyphen { get; set; }
 
         public FilenamePrefix(string filename)
         {
@@ -33,6 +34,7 @@ namespace PhotoFiler
             imageFiletimeString = imageFiletime.ToString("yyyyMMdd'_'HHmmss");
 
             filenameStartsWithYYYY = FilenameStartsWithYYYY(imageFilename);
+            filenameContainsSpaceOrHyphen = HasSpaceOrHyphenInFilename(imageFilename);
 
             // If we don't have a timestamp in the filename, then return false
             DateTime temp;
@@ -138,6 +140,14 @@ namespace PhotoFiler
         public bool hasMalformedFilenamePrefix()
         {
             if (filenameStartsWithYYYY && !hasValidFilenamePrefix)
+            {
+                return true;
+            }
+            return false;
+        }
+        public bool HasSpaceOrHyphenInFilename(string imageFilename)
+        {
+            if (imageFilename.Contains(" ") || imageFilename.Contains("-"))
             {
                 return true;
             }
@@ -280,7 +290,7 @@ namespace PhotoFiler
             MM = 1;
             DD = 1;
             // Test for YYYYMMDD (8)  (including YYYYxxxx etc)
-            if (IsValidYear(basename, start, out YYYY) &&      // 4 [0..3]
+            if (IsValidYear(basename, start, out YYYY) &&        // 4 [0..3]
                 IsValidMonth(basename, start+4, out MM) &&       // 2 [4..5]
                 IsValidDay(basename, start+6, YYYY, MM, out DD)) // 2 [6..7]
             {
@@ -355,7 +365,7 @@ namespace PhotoFiler
                     newbasename =  String.Concat(datetime.ToString("yyyyMMdd'_'HHmmss"), basename.Substring(17));
                 }
                 else
-                { 
+                {
                     // YYYY-MM-DD [10]
                     if (fDebugging)
                         Console.WriteLine($"INFO: RepairFilenamePrefix({YYYY},{MM},{DD} (DATE ONLY))");
@@ -402,6 +412,20 @@ namespace PhotoFiler
                     }
                 }
             }
+            string newfilename = String.Concat(newbasename, extension);
+            string newfullyQualifiedFilename = Path.Combine(directory, newfilename);
+            return newfullyQualifiedFilename;
+        }
+
+        public static string ReplaceSubstringInBasename(string fullyQualifiedFilename, string oldString, string newString)
+        {
+            string directory = Path.GetDirectoryName(fullyQualifiedFilename);
+            string basename = Path.GetFileNameWithoutExtension(fullyQualifiedFilename);
+            string extension = Path.GetExtension(fullyQualifiedFilename);
+
+            // Replace the string in the basename only
+            string newbasename = basename.Replace(oldString, newString);
+
             string newfilename = String.Concat(newbasename, extension);
             string newfullyQualifiedFilename = Path.Combine(directory, newfilename);
             return newfullyQualifiedFilename;
