@@ -20,6 +20,7 @@ Also, processing can be limited to camera known to me (or unknown). This is curr
 
 As at v0.92...
 
+```
 Usage: PhotoFiler [options] <PathToPhotos>
 Options:
    -h                         : Show Usage
@@ -49,7 +50,8 @@ Actions:
    --AddMissingFilenamePrefix              : Add Filename timestamp prefix if not already present (and not malformed)
    --FixFilenamePrefixFromExifTime         : Set Filename timestamp prefixes from Exif timestamps
    --ForceUnderscores                      : ForceUnderscores
-
+```
+   
 ------------------------------------------------------------
 ## Contact
 
