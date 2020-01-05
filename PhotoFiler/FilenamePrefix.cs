@@ -1,4 +1,6 @@
-﻿using System;
+﻿// PhotoFiler Copyright (c) 2019-2020 Jonathan Gilmore
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
