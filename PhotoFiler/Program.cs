@@ -364,16 +364,17 @@ namespace PhotoFiler
             else
             {
                 double megapixels = (double)(exif1.pixels)/(1024*1024);
-                Console.WriteLine(  "Ma:" + Truncate(exif1.cameraMake,22) + "\t" +
-                                    "Mo:" + Truncate(exif1.cameraModel,22) + "\t" +
-                                    "HxW:" + exif1.imageHeight + "x" + exif1.imageWidth + "\t" + 
-                                    "MP:" + String.Format("{0,8:0.0000}", megapixels) + "\t" + 
-                                    "Ex:" + Truncate(exif1.datetimeOriginalString,15) + "\t" + 
-                                    "Ft:" + Truncate(fnp1.imageFiletimeString,15) + "\t" + 
-                                    "Fp:" + Truncate(fnp1.imageFilenamePrefixString,15) + "\t" + 
-                                    "Fs:" + fnp1.imageFilesize + "\t" + 
-                                    "Fn:" + fnp1.imageFilename + "\t" + 
-                                    "Fn:" + fnp1.fullyQualifiedFilename );
+                Console.WriteLine(  "\tFILE:\t" +
+                                    "Ma:\t" + Truncate(exif1.cameraMake,22) + "\t" +
+                                    "Mo:\t" + Truncate(exif1.cameraModel,22) + "\t" +
+                                    "HxW:\t" + exif1.imageHeight + "*" + exif1.imageWidth + "\t" + 
+                                    "MP:\t" + String.Format("{0,8:0.0000}", megapixels) + "\t" + 
+                                    "Ex:\t" + Truncate(exif1.datetimeOriginalString,15) + "\t" + 
+                                    "Ft:\t" + Truncate(fnp1.imageFiletimeString,15) + "\t" + 
+                                    "Fp:\t" + Truncate(fnp1.imageFilenamePrefixString,15) + "\t" + 
+                                    "Fs:\t" + fnp1.imageFilesize + "\t" + 
+                                    "Fn:\t" + fnp1.imageFilename + "\t" + 
+                                    "Fq:\t" + fnp1.fullyQualifiedFilename );
             }
 
             ////////////////////////////////
