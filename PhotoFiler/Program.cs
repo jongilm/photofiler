@@ -32,6 +32,7 @@ namespace PhotoFiler
         public static bool fShowMalformedFilenamePrefix = false;
         public static bool fShowMissingFilenamePrefix = false;
         public static bool fShowSpacesAndHyphens = false;
+        public static bool fShowAllProblems = false;
         
         // Actions
         public static bool fActionSetFiletimeFromExifTime = false;
@@ -39,25 +40,74 @@ namespace PhotoFiler
         public static bool fActionAddMissingFilenamePrefix = false;
         public static bool fActionFixFilenamePrefixFromExifTime = false;
         public static bool fActionForceUnderscores = false;
+        public static bool fActionFixAllProblems = false;
         //public static bool fActionForceSpacesAndHyphens = false;
         //public static bool fActionFileByDate = false;
+
+        public static bool fPrintMakeAndModel = false;
+        public static bool fPrintDimensions = false;
+        public static bool fPrintDates = false;
+        public static bool fPrintFileDetails = false;
+
         // Counters
         public static int numberOfFilesProcessed = 0;
         public static int numberOfFilesShown = 0;
         public static int numberOfFilesFiltered = 0;
         public static int numberOfFilesActioned = 0;
 
+#if ARGPROCESSOR
+
+        void argProcessorAdd(string argTagShort, string argTagLong, string argType, bool *pResult, string argDescription)
+        {
+
+        }
+#endif
+
         static int Main( string[] args )
         {
-            Console.WriteLine("PhotoFiler v0.92 Copyright (c) 2019-2020 Jonathan Gilmore");
+            Console.WriteLine("PhotoFiler v1.0.2 Copyright (c) 2019-2020 Jonathan Gilmore");
             // 20200105 v0.92 - Added Nokia N73 to known cameras
+            // 20201114 v1.0.1 - Show usage if no runtime params
 
             try
             {
-                string filePath = @".";
+                string filePath = "";
                 //filePath = "20191130_192659_IMG_5030.JPG";
                 //filePath = @"C:\\Users\\Jonnie\\source\\repos\\PhotoFiler\\PhotoFiler\\bin\\Debug";
                 //filePath = @"C:/Users/Jonnie/source/repos/PhotoFiler/PhotoFiler/bin/Debug";
+#if ARGPROCESSOR
+                argProcessorAdd("-t", "--testing"                              , "switch", &fTesting, "Testing (Development/Debugging)");
+                argProcessorAdd("-h", "--help"                                 , "switch", &fShowUsage, "");
+                argProcessorAdd("-v", "--verbose"                              , "switch", &fVerbose, "");
+                argProcessorAdd("-r", "--recursive"                            , "switch", &fRecursive, "");
+                argProcessorAdd("-d", "--dummyrun"                             , "switch", &fDummyRun, "");
+                argProcessorAdd(null, "--showbranded"                          , "switch", &fShowOnlyBrandedCameras, "");
+                argProcessorAdd(null, "--showunbranded"                        , "switch", &fShowOnlyUnbrandedCameras, "");
+                argProcessorAdd(null, "--showknown"                            , "switch", &fShowOnlyKnownCameras, "");
+                argProcessorAdd(null, "--showunknown"                          , "switch", &fShowOnlyUnknownCameras, "");
+                argProcessorAdd(null, "--showfullsize"                         , "switch", &fShowOnlyDimensionsFullsize, "");
+                argProcessorAdd(null, "--shownotfullsize"                      , "switch", &fShowOnlyDimensionsNotFullsize, "");
+                argProcessorAdd(null, "--showcorrectfiletimevsexiftime"        , "switch", &fShowOnlyCorrectFiletimeVsExifTime, "");
+                argProcessorAdd(null, "--showcorrectfilenameprefixvsexiftime"  , "switch", &fShowOnlyCorrectFilenamePrefixVsExifTime, "");
+                argProcessorAdd(null, "--showcorrectfilenameprefixvsfiletime"  , "switch", &fShowOnlyCorrectFilenamePrefixVsFiletime, "");
+                argProcessorAdd(null, "--showincorrectfiletimevsexiftime"      , "switch", &fShowOnlyIncorrectFiletimeVsExifTime, "");
+                argProcessorAdd(null, "--showincorrectfilenameprefixvsexiftime", "switch", &fShowOnlyIncorrectFilenamePrefixVsExifTime, "");
+                argProcessorAdd(null, "--showincorrectfilenameprefixvsfiletime", "switch", &fShowOnlyIncorrectFilenamePrefixVsFiletime, "");
+                argProcessorAdd(null, "--showmalformedfilenameprefix"          , "switch", &fShowMalformedFilenamePrefix, "");
+                argProcessorAdd(null, "--showmissingfilenameprefix"            , "switch", &fShowMissingFilenamePrefix, "");
+                argProcessorAdd(null, "--showspacesandhyphens"                 , "switch", &fShowSpacesAndHyphens, "");
+                argProcessorAdd(null, "--showallproblems"                      , "switch", &fShowAllProblems, "");
+                argProcessorAdd(null, "--setfiletimesfromexiftimes"            , "switch", &fActionSetFiletimeFromExifTime, "");
+                argProcessorAdd(null, "--fixmalformedfilenameprefix"           , "switch", &fActionFixMalformedFilenamePrefix, "");
+                argProcessorAdd(null, "--addmissingfilenameprefix"             , "switch", &fActionAddMissingFilenamePrefix, "");
+                argProcessorAdd(null, "--fixfilenameprefixfromexiftime"        , "switch", &fActionFixFilenamePrefixFromExifTime, "");
+                argProcessorAdd(null, "--forceunderscores"                     , "switch", &fActionForceUnderscores, "");
+              //argProcessorAdd(null, "--forcespacesandhyphens"                , "switch", &fActionForceSpacesAndHyphens, "");
+              //argProcessorAdd(null, "--filebydate"                           , "switch", &fActionFileByDate, "");
+                argProcessorAdd(null, "--fixallproblems"                       , "switch", &fActionFixAllProblems, "");
+#else
+
+
                 for (int ii = 0; ii<args.Length; ii++)
                 {
                     Console.WriteLine($"args[{ii}]: {args[ii]}");
@@ -67,10 +117,9 @@ namespace PhotoFiler
                         {
                             case "-t": fTesting = true; break;
                             case "-h": fShowUsage = true; break;
-                            case "-v": fVerbose = true; ExifData.fVerbose = true; FilenamePrefix.fVerbose = true; break;
+                            case "-v": fVerbose = true; break;
                             case "-r": fRecursive = true; break;
                             case "-d": fDummyRun = true; break;
-
                             case "--showbranded": fShowOnlyBrandedCameras = true; break;
                             case "--showunbranded": fShowOnlyUnbrandedCameras = true; break;
                             case "--showknown": fShowOnlyKnownCameras = true; break;
@@ -86,35 +135,15 @@ namespace PhotoFiler
                             case "--showmalformedfilenameprefix": fShowMalformedFilenamePrefix = true; break;
                             case "--showmissingfilenameprefix": fShowMissingFilenamePrefix = true; break;
                             case "--showspacesandhyphens": fShowSpacesAndHyphens = true; break;
-                            //case "--showallproblems":
-                            //    fShowAllProblems = true;
-                            //    //fShowOnlyUnbrandedCameras = true;
-                            //    //fShowOnlyUnknownCameras = true;
-                            //    //fShowOnlyDimensionsNotFullsize = true;
-                            //    //fShowOnlyCorrectFilenamePrefixVsExifTime = true;
-                            //    //fShowOnlyCorrectFilenamePrefixVsFiletime = true;
-                            //    //fShowOnlyIncorrectFiletimeVsExifTime = true;
-                            //    //fShowOnlyIncorrectFilenamePrefixVsExifTime = true;
-                            //    //fShowOnlyIncorrectFilenamePrefixVsFiletime = true;
-                            //    //fShowMalformedFilenamePrefix = true;
-                            //    //fShowMissingFilenamePrefix = true;
-                            //    break;
-
+                            case "--showallproblems": fShowAllProblems = true; break;
                             case "--setfiletimesfromexiftimes": fActionSetFiletimeFromExifTime = true; break;
                             case "--fixmalformedfilenameprefix": fActionFixMalformedFilenamePrefix = true; break;
                             case "--addmissingfilenameprefix": fActionAddMissingFilenamePrefix = true; break;
                             case "--fixfilenameprefixfromexiftime": fActionFixFilenamePrefixFromExifTime = true; break;
                             case "--forceunderscores": fActionForceUnderscores = true; break;
-                            //case "--forcespacesandhyphens": fActionForceSpacesAndHyphens = true; break;
-                            //case "--filebydate": fActionFileByDate = true; break;
-                            //case "--fixproblems":
-                            //    fFixAllProblems = true;
-                            //    fActionSetFiletimeFromExifTime = true;
-                            //    fActionFixMalformedFilenamePrefix = true;
-                            //    fActionAddMissingFilenamePrefix = true;
-                            //    fActionFixFilenamePrefixFromExifTime = true;
-                            //    break;
-
+                          //case "--forcespacesandhyphens": fActionForceSpacesAndHyphens = true; break;
+                          //case "--filebydate": fActionFileByDate = true; break;
+                            case "--fixallproblems": fActionFixAllProblems = true; break;
                             default: Console.WriteLine($"Unrecognised option: {args[ii]}"); return -1;
                         }
                     }
@@ -152,6 +181,8 @@ namespace PhotoFiler
                     Console.WriteLine("   --ShowIncorrectFilenamePrefixVsFiletime : Process only images that have a filename prefix that does not match the FS file timestamp");
                     Console.WriteLine("   --ShowMalformedFilenamePrefix           : Process only images that have a filename prefix that is formatted differently to YYYYMMDD_HHMMSS");
                     Console.WriteLine("   --ShowMissingFilenamePrefix             : Process only images that have a no filename prefix, including any malformed prefix");
+                    Console.WriteLine("   --ShowAllProblems                       : Process only images that have one or more known problems");
+                    
                     Console.WriteLine("Actions:");
                     Console.WriteLine("   --SetFiletimesFromExifTimes             : Set File timestamps from Exif timestamps");
                     Console.WriteLine("   --FixMalformedFilenamePrefix            : Fix Malformed Filename timestamp prefixes");
@@ -161,7 +192,55 @@ namespace PhotoFiler
                     //Console.WriteLine("   --ForceSpacesAndHyphens    : ForceSpacesAndHyphens");
                     //Console.WriteLine("   --FileByDate               : FileByDate");
                     //Console.WriteLine("   --FixAll                   : fActionAddMissingFilenamePrefix, fSetFiletimesFromExifTimes, fActionForceUnderscores");
+                    Console.WriteLine("   --FixAllProblems                        : Fix all detected problems");
                     return 0;
+                }
+#endif
+                if (fVerbose)
+                {
+                    ExifData.fVerbose = true;
+                    FilenamePrefix.fVerbose = true;
+                }
+                if (fShowAllProblems)
+                {
+                    fShowOnlyUnbrandedCameras = true;
+                    fShowOnlyUnknownCameras = true;
+                    fShowOnlyDimensionsNotFullsize = true;
+                    fShowOnlyCorrectFilenamePrefixVsExifTime = true;
+                    fShowOnlyCorrectFilenamePrefixVsFiletime = true;
+                    fShowOnlyIncorrectFiletimeVsExifTime = true;
+                    fShowOnlyIncorrectFilenamePrefixVsExifTime = true;
+                    fShowOnlyIncorrectFilenamePrefixVsFiletime = true;
+                    fShowMalformedFilenamePrefix = true;
+                    fShowMissingFilenamePrefix = true;
+                }
+                if (fActionFixAllProblems)
+                {
+                    fActionSetFiletimeFromExifTime = true;
+                    fActionFixMalformedFilenamePrefix = true;
+                    fActionAddMissingFilenamePrefix = true;
+                    fActionFixFilenamePrefixFromExifTime = true;
+                }
+                { 
+                    if (fShowOnlyUnbrandedCameras) { fPrintMakeAndModel = true; }
+                    if (fShowOnlyUnknownCameras) { fPrintMakeAndModel = true; }
+                    if (fShowOnlyDimensionsNotFullsize) { fPrintDimensions = true; }
+                    if (fShowOnlyCorrectFilenamePrefixVsExifTime) { fPrintDates = true; fPrintFileDetails = true; }
+                    if (fShowOnlyCorrectFilenamePrefixVsFiletime) { fPrintDates = true; fPrintFileDetails = true; }
+                    if (fShowOnlyIncorrectFiletimeVsExifTime) { fPrintDates = true; }
+                    if (fShowOnlyIncorrectFilenamePrefixVsExifTime) { fPrintDates = true; fPrintFileDetails = true; }
+                    if (fShowOnlyIncorrectFilenamePrefixVsFiletime) { fPrintDates = true; fPrintFileDetails = true; }
+                    if (fShowMalformedFilenamePrefix) { fPrintFileDetails = true; }
+                    if (fShowMissingFilenamePrefix) { fPrintFileDetails = true; }
+
+
+                    if (fActionSetFiletimeFromExifTime) { fPrintDates = true; }
+                    if (fActionFixMalformedFilenamePrefix) { fPrintFileDetails = true; }
+                    if (fActionAddMissingFilenamePrefix) { fPrintDates = true; fPrintFileDetails = true; }
+                    if (fActionFixFilenamePrefixFromExifTime) { fPrintDates = true; fPrintFileDetails = true; }
+                    if (fActionForceUnderscores) { fPrintFileDetails = true; }
+                    //if (fActionForceSpacesAndHyphens) { }
+                    //if (fActionFileByDate) { }
                 }
                 if (fTesting)
                 {
@@ -200,6 +279,60 @@ namespace PhotoFiler
             return 0;
         }
 
+        public static string MaybeForceUnderscores(string theThing, bool isFile)
+        {
+            if (!fActionForceUnderscores)
+               return theThing;
+
+            if (isFile)
+            {
+                if (!File.Exists(theThing))
+                    return theThing;
+            }
+            else // isDirectory
+            {
+                if (!Directory.Exists(theThing))
+                    return theThing;
+            }
+
+            string newfullyQualifiedFilename = theThing;
+            newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename, "-ish", "_ish");
+            newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename, " - ", "__");
+            newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename, "-", "__");
+            newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename, " ", "_");
+            newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename, ".", "_");
+            newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename, ",", "_");
+            // If a change was indeed made
+            if (newfullyQualifiedFilename != theThing)
+            {
+                if (fDummyRun)
+                {
+                    Console.WriteLine($"DUMMY: ForceUnderscores({theThing}) ==> {newfullyQualifiedFilename}");
+                }
+                else
+                {
+                    Console.WriteLine($"ACTION: ForceUnderscores({theThing}) ==> {newfullyQualifiedFilename}");
+                    try
+                    {
+                        if (isFile)
+                            System.IO.File.Move(theThing, newfullyQualifiedFilename);
+                        else
+                            System.IO.Directory.Move(theThing, newfullyQualifiedFilename);
+                    }
+                    catch (System.IO.IOException ex)
+                    {
+                        // Cannot create a file when that file already exists.
+                        Console.WriteLine($"ERROR: ForceUnderscores failed to rename/move file/dir ({theThing} ==> {newfullyQualifiedFilename}) (already exists?): {ex}");
+                        // Keep going.
+                        return theThing;
+                    }
+                }
+                return newfullyQualifiedFilename;
+            }
+            //fForceSpacesAndHyphens
+
+            return theThing;
+        }
 
         public static void DirectorySearch(string thisDir, int depth, bool recursive = true )
         {
@@ -222,7 +355,8 @@ namespace PhotoFiler
                 {
                     foreach (var subDir in subDirs)
                     {
-                        DirectorySearch(subDir, depth+1, recursive);
+                        string newName = MaybeForceUnderscores(subDir, false);
+                        DirectorySearch(newName, depth+1, recursive);
                     }
                 }
             }
@@ -363,18 +497,32 @@ namespace PhotoFiler
             }
             else
             {
-                double megapixels = (double)(exif1.pixels)/(1024*1024);
-                Console.WriteLine(  "\tFILE:\t" +
-                                    "Ma:\t" + Truncate(exif1.cameraMake,22) + "\t" +
-                                    "Mo:\t" + Truncate(exif1.cameraModel,22) + "\t" +
-                                    "HxW:\t" + exif1.imageHeight + "*" + exif1.imageWidth + "\t" + 
-                                    "MP:\t" + String.Format("{0,8:0.0000}", megapixels) + "\t" + 
-                                    "Ex:\t" + Truncate(exif1.datetimeOriginalString,15) + "\t" + 
-                                    "Ft:\t" + Truncate(fnp1.imageFiletimeString,15) + "\t" + 
-                                    "Fp:\t" + Truncate(fnp1.imageFilenamePrefixString,15) + "\t" + 
-                                    "Fs:\t" + fnp1.imageFilesize + "\t" + 
-                                    "Fn:\t" + fnp1.imageFilename + "\t" + 
-                                    "Fq:\t" + fnp1.fullyQualifiedFilename );
+                    double megapixels = (double)(exif1.pixels)/(1024*1024);
+                Console.Write("\t");
+                Console.Write("FILE:\t");
+                if (fPrintMakeAndModel)
+                { 
+                Console.Write("Ma: " + Truncate(exif1.cameraMake,22) + "\t");
+                Console.Write("Mo: " + Truncate(exif1.cameraModel,22) + "\t");
+                }
+                if (fPrintDimensions)
+                {
+                    Console.Write("HxW: " + exif1.imageHeight + "*" + exif1.imageWidth + "\t");
+                    Console.Write("MP: " + String.Format("{0,8:0.0000}", megapixels) + "\t");
+                }
+                if (fPrintDates)
+                {
+                    Console.Write("Ex: " + Truncate(exif1.datetimeOriginalString,15) + "\t");
+                    Console.Write("Ft: " + Truncate(fnp1.imageFiletimeString,15) + "\t");
+                    Console.Write("Fp: " + Truncate(fnp1.imageFilenamePrefixString,15) + "\t");
+                }
+                if (fPrintFileDetails)
+                {
+                    Console.Write("Fs: " + fnp1.imageFilesize + "\t");
+                    Console.Write("Fn: " + fnp1.imageFilename + "\t");
+                }
+                Console.Write("Fq: " + fnp1.fullyQualifiedFilename );
+                Console.WriteLine("");
             }
 
             ////////////////////////////////
@@ -488,41 +636,12 @@ namespace PhotoFiler
                     numberOfFilesActioned++;
                 }
             }
-            if ( fActionForceUnderscores &&
-                 File.Exists(fnp1.fullyQualifiedFilename) ) 
+            string newName = MaybeForceUnderscores(fnp1.fullyQualifiedFilename, true);
+            if (newName != fnp1.fullyQualifiedFilename)
             {
-                string newfullyQualifiedFilename = fnp1.fullyQualifiedFilename;
-                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,"-ish", "_ish");
-                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename," - ", "__");
-                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,"-", "__");
-                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename," ", "_");
-                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,".", "_");
-                newfullyQualifiedFilename = FilenamePrefix.ReplaceSubstringInBasename(newfullyQualifiedFilename,",", "_");
-                // If a change was indeed made
-                if (newfullyQualifiedFilename != fnp1.fullyQualifiedFilename)
-                {
-                    if (fDummyRun)
-                    {
-                        Console.WriteLine($"DUMMY: ForceUnderscores({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
-                    }
-                    else
-                    { 
-                        Console.WriteLine($"ACTION: ForceUnderscores({fnp1.fullyQualifiedFilename}) ==> {newfullyQualifiedFilename}");
-                        try
-                        {
-                            System.IO.File.Move(fnp1.fullyQualifiedFilename, newfullyQualifiedFilename);
-                        }
-                        catch(System.IO.IOException ex)
-                        {
-                            // Cannot create a file when that file already exists.
-                            Console.WriteLine($"ERROR: ForceUnderscores failed to rename/move file ({fnp1.fullyQualifiedFilename} ==> {newfullyQualifiedFilename}) (already exists?): {ex}");
-                            // Keep going.
-                        }
-                    }
-                    numberOfFilesActioned++;
-                }
+                fnp1.fullyQualifiedFilename = newName;
+                numberOfFilesActioned++;
             }
-            //fForceSpacesAndHyphens
             //fFileByDate
         }
 
