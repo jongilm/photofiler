@@ -33,7 +33,8 @@ namespace PhotoFiler
         public static bool fShowMissingFilenamePrefix = false;
         public static bool fShowSpacesAndHyphens = false;
         public static bool fShowAllProblems = false;
-        
+        public static bool fPrintAllColumns = false;
+
         // Actions
         public static bool fActionSetFiletimeFromExifTime = false;
         public static bool fActionFixMalformedFilenamePrefix = false;
@@ -68,6 +69,8 @@ namespace PhotoFiler
             Console.WriteLine("PhotoFiler v1.0.2 Copyright (c) 2019-2020 Jonathan Gilmore");
             // 20200105 v0.92 - Added Nokia N73 to known cameras
             // 20201114 v1.0.1 - Show usage if no runtime params
+            // 20201114 v1.0.2 - Add printing only of relevant columns. Modify forceunderscores to also rename all traversed subdirs.
+            // 20201114 v1.0.3 - Add PrintAllColumns param, which also reinstitutes tabs between name and value when printing.
 
             try
             {
@@ -97,6 +100,7 @@ namespace PhotoFiler
                 argProcessorAdd(null, "--showmissingfilenameprefix"            , "switch", &fShowMissingFilenamePrefix, "");
                 argProcessorAdd(null, "--showspacesandhyphens"                 , "switch", &fShowSpacesAndHyphens, "");
                 argProcessorAdd(null, "--showallproblems"                      , "switch", &fShowAllProblems, "");
+                argProcessorAdd(null, "--printallcolumns"                      , "switch", &fPrintAllColumns, "");
                 argProcessorAdd(null, "--setfiletimesfromexiftimes"            , "switch", &fActionSetFiletimeFromExifTime, "");
                 argProcessorAdd(null, "--fixmalformedfilenameprefix"           , "switch", &fActionFixMalformedFilenamePrefix, "");
                 argProcessorAdd(null, "--addmissingfilenameprefix"             , "switch", &fActionAddMissingFilenamePrefix, "");
@@ -136,6 +140,7 @@ namespace PhotoFiler
                             case "--showmissingfilenameprefix": fShowMissingFilenamePrefix = true; break;
                             case "--showspacesandhyphens": fShowSpacesAndHyphens = true; break;
                             case "--showallproblems": fShowAllProblems = true; break;
+                            case "--printallcolumns": fPrintAllColumns = true; break;
                             case "--setfiletimesfromexiftimes": fActionSetFiletimeFromExifTime = true; break;
                             case "--fixmalformedfilenameprefix": fActionFixMalformedFilenamePrefix = true; break;
                             case "--addmissingfilenameprefix": fActionAddMissingFilenamePrefix = true; break;
@@ -221,6 +226,14 @@ namespace PhotoFiler
                     fActionAddMissingFilenamePrefix = true;
                     fActionFixFilenamePrefixFromExifTime = true;
                 }
+                if (fPrintAllColumns)
+                {
+                    fPrintMakeAndModel = true;
+                    fPrintDimensions = true;
+                    fPrintDates = true;
+                    fPrintFileDetails = true;
+                }
+                else
                 { 
                     if (fShowOnlyUnbrandedCameras) { fPrintMakeAndModel = true; }
                     if (fShowOnlyUnknownCameras) { fPrintMakeAndModel = true; }
@@ -497,31 +510,36 @@ namespace PhotoFiler
             }
             else
             {
-                    double megapixels = (double)(exif1.pixels)/(1024*1024);
+                double megapixels = (double)(exif1.pixels)/(1024*1024);
+                string nameValueDelimiter;
+                if (fPrintAllColumns)
+                    nameValueDelimiter = "\t";
+                else
+                    nameValueDelimiter = " ";
                 Console.Write("\t");
-                Console.Write("FILE:\t");
+                Console.Write("FILE:" + nameValueDelimiter);
                 if (fPrintMakeAndModel)
                 { 
-                Console.Write("Ma: " + Truncate(exif1.cameraMake,22) + "\t");
-                Console.Write("Mo: " + Truncate(exif1.cameraModel,22) + "\t");
+                Console.Write("Ma:" + nameValueDelimiter + Truncate(exif1.cameraMake,22) + "\t");
+                Console.Write("Mo:" + nameValueDelimiter + Truncate(exif1.cameraModel,22) + "\t");
                 }
                 if (fPrintDimensions)
                 {
-                    Console.Write("HxW: " + exif1.imageHeight + "*" + exif1.imageWidth + "\t");
-                    Console.Write("MP: " + String.Format("{0,8:0.0000}", megapixels) + "\t");
+                    Console.Write("HxW:" + nameValueDelimiter + exif1.imageHeight + "*" + exif1.imageWidth + "\t");
+                    Console.Write("MP:" + nameValueDelimiter + String.Format("{0,8:0.0000}", megapixels) + "\t");
                 }
                 if (fPrintDates)
                 {
-                    Console.Write("Ex: " + Truncate(exif1.datetimeOriginalString,15) + "\t");
-                    Console.Write("Ft: " + Truncate(fnp1.imageFiletimeString,15) + "\t");
-                    Console.Write("Fp: " + Truncate(fnp1.imageFilenamePrefixString,15) + "\t");
+                    Console.Write("Ex:" + nameValueDelimiter + Truncate(exif1.datetimeOriginalString,15) + "\t");
+                    Console.Write("Ft:" + nameValueDelimiter + Truncate(fnp1.imageFiletimeString,15) + "\t");
+                    Console.Write("Fp:" + nameValueDelimiter + Truncate(fnp1.imageFilenamePrefixString,15) + "\t");
                 }
                 if (fPrintFileDetails)
                 {
-                    Console.Write("Fs: " + fnp1.imageFilesize + "\t");
-                    Console.Write("Fn: " + fnp1.imageFilename + "\t");
+                    Console.Write("Fs:" + nameValueDelimiter + fnp1.imageFilesize + "\t");
+                    Console.Write("Fn:" + nameValueDelimiter + fnp1.imageFilename + "\t");
                 }
-                Console.Write("Fq: " + fnp1.fullyQualifiedFilename );
+                Console.Write("Fq:" + nameValueDelimiter + fnp1.fullyQualifiedFilename );
                 Console.WriteLine("");
             }
 
